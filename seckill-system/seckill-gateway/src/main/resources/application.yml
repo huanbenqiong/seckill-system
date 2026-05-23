@@ -1,0 +1,89 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: seckill-gateway
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: seckill-group
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: seckill-group
+        file-extension: yml
+
+    gateway:
+      # 路由配置
+      routes:
+        # 用户服务
+        - id: seckill-user
+          uri: lb://seckill-user
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - StripPrefix=1
+        # 商品服务
+        - id: seckill-goods
+          uri: lb://seckill-goods
+          predicates:
+            - Path=/api/goods/**
+          filters:
+            - StripPrefix=1
+        # 订单服务
+        - id: seckill-order
+          uri: lb://seckill-order
+          predicates:
+            - Path=/api/order/**
+          filters:
+            - StripPrefix=1
+      # 全局跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: "*"
+            allowed-methods: "*"
+            allowed-headers: "*"
+            allow-credentials: true
+            exposed-headers:
+              - Authorization
+      # 默认过滤器
+      default-filters:
+        - DedupeResponseHeader=Vary Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password:
+    database: 0
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+# Sentinel 配置
+spring.cloud.sentinel:
+  eager: true
+  transport:
+    port: 8719
+    dashboard: 127.0.0.1:8858
+
+# Actuator 配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: debug
