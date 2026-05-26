@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 订单控制器
@@ -24,23 +25,37 @@ public class OrderController {
     @PostMapping("/create")
     public Result<String> createSeckillOrder(
             @RequestParam("userId") Long userId,
-            @RequestParam("goodsId") Long goodsId,
-            @RequestParam("orderId") String orderId,
-            @RequestParam(value = "goodsName", defaultValue = "秒杀商品") String goodsName,
-            @RequestParam(value = "goodsImage", defaultValue = "") String goodsImage,
-            @RequestParam(value = "seckillPrice", defaultValue = "0") BigDecimal seckillPrice,
-            @RequestParam(value = "quantity", defaultValue = "1") Integer quantity) {
+            @RequestParam("seckillId") Long seckillId,
+            @RequestParam("orderId") Long orderId,
+            @RequestParam("amount") Integer amount) {
 
-        orderService.createSeckillOrder(userId, goodsId, orderId, goodsName, goodsImage, seckillPrice, quantity);
-        return Result.success("订单创建成功", orderId);
+        orderService.createSeckillOrder(userId, seckillId, orderId, BigDecimal.valueOf(amount));
+        return Result.success("订单创建成功", String.valueOf(orderId));
+    }
+
+    /**
+     * 获取用户的所有订单
+     */
+    @GetMapping("/list")
+    public Result<List<Order>> getUserOrders(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) {
+            return Result.error("请先登录");
+        }
+        List<Order> orders = orderService.getUserOrders(userId);
+        return Result.success(orders);
     }
 
     /**
      * 支付订单
      */
     @PostMapping("/pay/{orderId}")
-    public Result<Void> payOrder(@PathVariable("orderId") String orderId) {
-        orderService.payOrder(orderId);
+    public Result<String> payOrder(
+            @PathVariable("orderId") Long orderId,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) {
+            return Result.error("请先登录");
+        }
+        orderService.payOrder(orderId, userId);
         return Result.success("支付成功");
     }
 
@@ -48,10 +63,15 @@ public class OrderController {
      * 获取订单详情
      */
     @GetMapping("/detail/{orderId}")
-    public Result<Order> getOrderDetail(@PathVariable("orderId") String orderId) {
-        Order order = orderService.getOrderById(orderId);
+    public Result<Order> getOrderDetail(
+            @PathVariable("orderId") Long orderId,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) {
+            return Result.error("请先登录");
+        }
+        Order order = orderService.getOrderByIdAndUserId(orderId, userId);
         if (order == null) {
-            return Result.error("订单不存在");
+            return Result.error("订单不存在或无权访问");
         }
         return Result.success(order);
     }
@@ -60,8 +80,13 @@ public class OrderController {
      * 取消订单
      */
     @PostMapping("/cancel/{orderId}")
-    public Result<Void> cancelOrder(@PathVariable("orderId") String orderId) {
-        orderService.cancelOrder(orderId);
+    public Result<String> cancelOrder(
+            @PathVariable("orderId") Long orderId,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) {
+            return Result.error("请先登录");
+        }
+        orderService.cancelOrder(orderId, userId);
         return Result.success("订单已取消");
     }
 }

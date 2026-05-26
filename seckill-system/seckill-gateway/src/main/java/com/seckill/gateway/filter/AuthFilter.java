@@ -1,5 +1,7 @@
 package com.seckill.gateway.filter;
 
+import com.seckill.common.utils.JwtUtils;
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -27,13 +31,20 @@ public class AuthFilter implements GlobalFilter, Ordered {
             "/user/login",
             "/user/register",
             "/goods/list",
-            "/goods/detail"
+            "/goods/detail",
+            "/seller/dashboard",
+            "/seller/products",
+            "/seller/orders",
+            "/seller/statistics"
     );
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
+        String method = request.getMethod().name();
+
+        log.debug("AuthFilter 处理请求: {} {}", method, path);
 
         // 白名单直接放行
         for (String whitePath : WHITE_LIST) {
@@ -42,70 +53,86 @@ public class AuthFilter implements GlobalFilter, Ordered {
             }
         }
 
-        // 获取 Token
+        // 获取 Token (支持 Header 和 Cookie)
         String token = extractToken(request);
+        
         if (token == null) {
             log.warn("请求路径: {}, Token 不存在", path);
             return unauthorized(exchange.getResponse(), "请先登录");
         }
 
-        // TODO: 调用用户服务验证 Token
-        // 这里简化处理，实际应该调用 Redis 或用户服务验证
-        if (!validateToken(token)) {
+        // 验证 Token
+        if (!JwtUtils.validateToken(token)) {
             log.warn("请求路径: {}, Token 验证失败", path);
             return unauthorized(exchange.getResponse(), "登录已过期，请重新登录");
         }
 
-        // 将用户信息添加到请求头，传递给下游服务
-        Long userId = getUserIdFromToken(token);
-        String username = getUsernameFromToken(token);
+        // 解析 Token 获取用户信息
+        Long userId;
+        String username;
+        try {
+            userId = JwtUtils.getUserId(token);
+            username = JwtUtils.getUsername(token);
+        } catch (JwtException e) {
+            log.warn("请求路径: {}, Token 解析失败: {}", path, e.getMessage());
+            return unauthorized(exchange.getResponse(), "登录已过期，请重新登录");
+        }
 
+        if (userId == null) {
+            log.warn("请求路径: {}, Token 中用户ID为空", path);
+            return unauthorized(exchange.getResponse(), "登录已过期，请重新登录");
+        }
+
+        // 将用户信息添加到请求头，传递给下游服务
         ServerHttpRequest modifiedRequest = request.mutate()
                 .header("X-User-Id", userId.toString())
-                .header("X-Username", username)
+                .header("X-Username", username != null ? username : "")
                 .build();
+
+        log.debug("请求路径: {}, 用户ID: {}, 用户名: {}", path, userId, username);
 
         return chain.filter(exchange.mutate().request(modifiedRequest).build());
     }
 
     @Override
     public int getOrder() {
-        return -100; // 优先级最高
+        return -100;
     }
 
     /**
-     * 从请求头提取 Token
+     * 从请求中提取 Token
+     * 优先从 Authorization Header 获取，其次从 Cookie 获取
      */
     private String extractToken(ServerHttpRequest request) {
+        // 1. 从 Authorization Header 获取
         String authHeader = request.getHeaders().getFirst("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
+            String token = authHeader.substring(7);
+            if (!token.isEmpty()) {
+                return token;
+            }
         }
+
+        // 2. 从 Cookie 获取
+        String cookie = request.getHeaders().getFirst("Cookie");
+        if (cookie != null) {
+            // 解析 cookie 中的 token
+            String[] cookies = cookie.split(";");
+            for (String c : cookies) {
+                String[] parts = c.trim().split("=");
+                if (parts.length == 2 && "token".equals(parts[0].trim())) {
+                    return parts[1].trim();
+                }
+            }
+        }
+
+        // 3. 从查询参数获取（不推荐，仅用于开发调试）
+        String queryToken = request.getQueryParams().getFirst("token");
+        if (queryToken != null && !queryToken.isEmpty()) {
+            return queryToken;
+        }
+
         return null;
-    }
-
-    /**
-     * 验证 Token (简化实现)
-     */
-    private boolean validateToken(String token) {
-        // 实际应该调用用户服务或 Redis 验证
-        return token != null && token.length() > 10;
-    }
-
-    /**
-     * 从 Token 获取用户ID (简化实现)
-     */
-    private Long getUserIdFromToken(String token) {
-        // 实际应该解析 JWT 获取
-        return 1L;
-    }
-
-    /**
-     * 从 Token 获取用户名 (简化实现)
-     */
-    private String getUsernameFromToken(String token) {
-        // 实际应该解析 JWT 获取
-        return "user";
     }
 
     /**
@@ -114,7 +141,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private Mono<Void> unauthorized(ServerHttpResponse response, String message) {
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
         response.getHeaders().add("Content-Type", "application/json;charset=UTF-8");
+        response.getHeaders().add("Access-Control-Allow-Credentials", "true");
+        response.getHeaders().add("Access-Control-Allow-Origin", "*");
+        
         String body = "{\"code\":401,\"message\":\"" + message + "\"}";
-        return response.writeWith(Mono.just(response.bufferFactory().wrap(body.getBytes())));
+        return response.writeWith(Mono.just(response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8))));
     }
 }

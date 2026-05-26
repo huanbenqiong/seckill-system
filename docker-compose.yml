@@ -1,0 +1,30 @@
+version: '3'
+services:
+  rocketmq-namesrv:
+    image: apache/rocketmq:4.9.4
+    container_name: rocketmq-namesrv
+    ports:
+      - "9876:9876"
+    environment:
+      - JAVA_OPT_EXT=-Xms512m -Xmx512m -Xmn256m
+    command: sh mqnamesrv
+    networks:
+      - seckill-net
+
+  rocketmq-broker:
+    image: apache/rocketmq:4.9.4
+    container_name: rocketmq-broker
+    ports:
+      - "10911:10911"
+      - "10912:10912"
+    environment:
+      - JAVA_OPT_EXT=-Xms512m -Xmx512m -Xmn256m
+    command: sh mqbroker -n rocketmq-namesrv:9876
+    depends_on:
+      - rocketmq-namesrv
+    networks:
+      - seckill-net
+
+networks:
+  seckill-net:
+    driver: bridge

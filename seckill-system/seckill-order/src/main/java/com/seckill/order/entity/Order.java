@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 订单实体类
  */
 @Data
-@TableName("t_order")
+@TableName("sk_order")
 public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -20,7 +20,7 @@ public class Order implements Serializable {
      * 订单ID
      */
     @TableId(type = IdType.INPUT)
-    private String id;
+    private Long id;
 
     /**
      * 用户ID
@@ -28,19 +28,9 @@ public class Order implements Serializable {
     private Long userId;
 
     /**
-     * 商品ID
+     * 秒杀活动ID
      */
-    private Long goodsId;
-
-    /**
-     * 商品名称
-     */
-    private String goodsName;
-
-    /**
-     * 商品图片
-     */
-    private String goodsImage;
+    private Long seckillId;
 
     /**
      * 秒杀价格
@@ -48,14 +38,9 @@ public class Order implements Serializable {
     private BigDecimal seckillPrice;
 
     /**
-     * 购买数量
+     * 订单金额
      */
-    private Integer quantity;
-
-    /**
-     * 订单总金额
-     */
-    private BigDecimal totalAmount;
+    private BigDecimal amount;
 
     /**
      * 订单状态: 0-待支付, 1-已支付, 2-已取消, 3-已超时
@@ -68,20 +53,14 @@ public class Order implements Serializable {
     private LocalDateTime payTime;
 
     /**
-     * 订单创建时间
+     * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
-     * 订单更新时间
+     * 更新时间
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
-
-    /**
-     * 删除标记
-     */
-    @TableLogic
-    private Integer deleted;
 }

@@ -15,10 +15,16 @@
     <description>网关服务 - 路由转发、限流、认证</description>
 
     <dependencies>
-        <!-- 公共模块 -->
+        <!-- 公共模块 (排除 web 依赖，避免与 Gateway 冲突) -->
         <dependency>
             <groupId>com.seckill</groupId>
             <artifactId>seckill-common</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-web</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Spring Cloud Gateway -->

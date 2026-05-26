@@ -1,7 +1,6 @@
 package com.seckill.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 /**
@@ -15,4 +14,9 @@ public class LoginRequest {
 
     @NotBlank(message = "密码不能为空")
     private String password;
+
+    /**
+     * 角色: 0-买家, 1-卖家
+     */
+    private Integer role;
 }

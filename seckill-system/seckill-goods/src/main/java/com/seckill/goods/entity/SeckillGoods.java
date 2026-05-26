@@ -11,51 +11,51 @@ import java.time.LocalDateTime;
  * 秒杀商品实体类
  */
 @Data
-@TableName("t_seckill_goods")
+@TableName("sk_seckill_goods")
 public class SeckillGoods implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * 商品ID
+     * 秒杀活动ID
      */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 商品名称
+     * 关联的商品ID
      */
-    private String goodsName;
+    private Long goodsId;
 
     /**
-     * 商品图片
-     */
-    private String goodsImage;
-
-    /**
-     * 原价
-     */
-    private BigDecimal originalPrice;
-
-    /**
-     * 秒杀价
+     * 秒杀价格
      */
     private BigDecimal seckillPrice;
 
     /**
-     * 秒杀开始时间
-     */
-    private LocalDateTime startTime;
-
-    /**
-     * 秒杀结束时间
-     */
-    private LocalDateTime endTime;
-
-    /**
-     * 秒杀库存
+     * 剩余秒杀库存数量
      */
     private Integer stockCount;
+
+    /**
+     * 已秒杀数量
+     */
+    private Integer soldCount;
+
+    /**
+     * 秒杀活动开始时间
+     */
+    private LocalDateTime startDate;
+
+    /**
+     * 秒杀活动结束时间
+     */
+    private LocalDateTime endDate;
+
+    /**
+     * 订单超时时间（秒）
+     */
+    private Integer timeoutSeconds;
 
     /**
      * 每人限购数量
@@ -63,20 +63,14 @@ public class SeckillGoods implements Serializable {
     private Integer limitCount;
 
     /**
-     * 秒杀描述
+     * 乐观锁版本号
      */
-    private String description;
+    private Integer version;
 
     /**
-     * 状态: 0-未开始, 1-进行中, 2-已结束
+     * 状态: 0-已下线, 1-准备中, 2-进行中, 3-已结束
      */
     private Integer status;
-
-    /**
-     * 删除标记
-     */
-    @TableLogic
-    private Integer deleted;
 
     /**
      * 创建时间

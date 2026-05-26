@@ -5,6 +5,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
+
 /**
  * 订单服务 Feign 客户端
  */
@@ -17,7 +19,8 @@ public interface OrderFeignClient {
     @PostMapping("/create")
     Result<String> createSeckillOrder(
             @RequestParam("userId") Long userId,
-            @RequestParam("goodsId") Long goodsId,
-            @RequestParam("orderId") String orderId
+            @RequestParam("seckillId") Long seckillId,
+            @RequestParam("orderId") Long orderId,
+            @RequestParam("amount") Integer amount
     );
 }

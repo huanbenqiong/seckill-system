@@ -36,4 +36,14 @@ public class LoginResponse {
      * 用户名
      */
     private String username;
+
+    /**
+     * 角色: 0-买家, 1-卖家
+     */
+    private Integer role;
+
+    /**
+     * 店铺名称
+     */
+    private String shopName;
 }

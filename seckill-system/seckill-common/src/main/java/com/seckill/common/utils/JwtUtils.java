@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,7 +16,7 @@ import java.util.Map;
 @Slf4j
 public class JwtUtils {
 
-    private static final String SECRET = "seckill-system-jwt-secret-key-must-be-at-least-256-bits-long";
+    private static final String SECRET = "seckill-system-jwt-secret-key-must-be-at-least-256-bits-long-for-security";
     private static final long EXPIRATION = 24 * 60 * 60 * 1000L; // 24小时
     private static final SecretKey KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
@@ -23,30 +24,37 @@ public class JwtUtils {
      * 生成 Token
      */
     public static String generateToken(Long userId, String username) {
-        Date now = new Date();
-        Date expiration = new Date(now.getTime() + EXPIRATION);
-        return Jwts.builder()
-                .subject(userId.toString())
-                .claim("username", username)
-                .issuedAt(now)
-                .expiration(expiration)
-                .signWith(KEY)
-                .compact();
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("username", username);
+        return createToken(claims, userId.toString());
     }
 
     /**
      * 生成带自定义 Claims 的 Token
      */
-    public static String generateToken(Long userId, String username, Map<String, Object> claims) {
+    public static String generateToken(Long userId, String username, Map<String, Object> extraClaims) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("username", username);
+        claims.putAll(extraClaims);
+        return createToken(claims, userId.toString());
+    }
+
+    /**
+     * 创建 Token
+     */
+    private static String createToken(Map<String, Object> claims, String subject) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + EXPIRATION);
-        JwtBuilder builder = Jwts.builder()
-                .subject(userId.toString())
-                .claim("username", username)
+        
+        return Jwts.builder()
+                .claims(claims)
+                .subject(subject)
                 .issuedAt(now)
-                .expiration(expiration);
-        claims.forEach(builder::claim);
-        return builder.signWith(KEY).compact();
+                .expiration(expiration)
+                .signWith(KEY, Jwts.SIG.HS256)
+                .compact();
     }
 
     /**
@@ -73,6 +81,12 @@ public class JwtUtils {
      */
     public static Long getUserId(String token) {
         Claims claims = parseToken(token);
+        Object userId = claims.get("userId");
+        if (userId instanceof Integer) {
+            return ((Integer) userId).longValue();
+        } else if (userId instanceof Long) {
+            return (Long) userId;
+        }
         return Long.parseLong(claims.getSubject());
     }
 
@@ -89,7 +103,7 @@ public class JwtUtils {
      */
     public static Map<String, Object> getClaims(String token) {
         Claims claims = parseToken(token);
-        return claims;
+        return new HashMap<>(claims);
     }
 
     /**
@@ -100,6 +114,7 @@ public class JwtUtils {
             parseToken(token);
             return true;
         } catch (Exception e) {
+            log.debug("Token 验证失败: {}", e.getMessage());
             return false;
         }
     }
@@ -113,6 +128,22 @@ public class JwtUtils {
             return claims.getExpiration().before(new Date());
         } catch (ExpiredJwtException e) {
             return true;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    /**
+     * 获取 Token 剩余过期时间(秒)
+     */
+    public static long getRemainingExpiration(String token) {
+        try {
+            Claims claims = parseToken(token);
+            Date expiration = claims.getExpiration();
+            long remaining = (expiration.getTime() - System.currentTimeMillis()) / 1000;
+            return Math.max(0, remaining);
+        } catch (Exception e) {
+            return 0;
         }
     }
 }

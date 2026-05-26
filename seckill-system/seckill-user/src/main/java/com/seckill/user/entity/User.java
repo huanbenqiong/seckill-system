@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 用户实体类
  */
 @Data
-@TableName("t_user")
+@TableName("sk_user")
 public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -22,9 +22,9 @@ public class User implements Serializable {
     private Long id;
 
     /**
-     * 用户名
+     * 用户昵称
      */
-    private String username;
+    private String nickname;
 
     /**
      * 密码 (加密存储)
@@ -32,50 +32,37 @@ public class User implements Serializable {
     private String password;
 
     /**
-     * 手机号
+     * 随机盐
      */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String email;
-
-    /**
-     * 真实姓名
-     */
-    private String realName;
-
-    /**
-     * 性别: 0-女, 1-男
-     */
-    private Integer gender;
+    private String salt;
 
     /**
      * 头像
      */
-    private String avatar;
+    private String head;
 
     /**
-     * 状态: 0-禁用, 1-正常
+     * 角色: 0-买家, 1-卖家
      */
-    private Integer status;
+    private Integer role;
 
     /**
-     * 删除标记: 0-未删除, 1-已删除
+     * 店铺名称（卖家专用）
      */
-    @TableLogic
-    private Integer deleted;
+    private String shopName;
 
     /**
-     * 创建时间
+     * 注册时间
      */
-    @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
+    private LocalDateTime registerDate;
 
     /**
-     * 更新时间
+     * 上次登录时间
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
+    private LocalDateTime lastLoginDate;
+
+    /**
+     * 登录次数
+     */
+    private Integer loginCount;
 }

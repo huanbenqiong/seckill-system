@@ -23,8 +23,8 @@ public class GoodsController {
      */
     @GetMapping("/list")
     public Result<List<SeckillGoods>> getSeckillGoodsList() {
-        // TODO: 实现商品列表查询
-        return Result.success();
+        List<SeckillGoods> list = seckillService.getGoodsList();
+        return Result.success(list);
     }
 
     /**
@@ -32,8 +32,8 @@ public class GoodsController {
      */
     @GetMapping("/detail/{goodsId}")
     public Result<SeckillGoods> getGoodsDetail(@PathVariable("goodsId") Long goodsId) {
-        // TODO: 实现商品详情查询
-        return Result.success();
+        SeckillGoods goods = seckillService.getGoodsDetail(goodsId);
+        return Result.success(goods);
     }
 
     /**
@@ -56,8 +56,17 @@ public class GoodsController {
      * 预热秒杀商品库存到 Redis (管理员接口)
      */
     @PostMapping("/preload/{goodsId}")
-    public Result<Void> preloadStock(@PathVariable("goodsId") Long goodsId) {
+    public Result<String> preloadStock(@PathVariable("goodsId") Long goodsId) {
         seckillService.preloadStockToRedis(goodsId);
         return Result.success("库存预热成功");
+    }
+
+    /**
+     * 恢复秒杀商品库存（内部接口，供其他服务调用）
+     */
+    @PostMapping("/restoreStock/{goodsId}")
+    public Result<String> restoreStock(@PathVariable("goodsId") Long goodsId) {
+        seckillService.restoreStockInDb(goodsId);
+        return Result.success("库存恢复成功");
     }
 }

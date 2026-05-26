@@ -1,14 +1,14 @@
 package com.seckill.order.service;
 
-import com.seckill.common.constant.MqConstants;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.seckill.common.constant.RedisConstants;
 import com.seckill.common.exception.BusinessException;
 import com.seckill.common.result.ResultCode;
 import com.seckill.order.entity.Order;
+import com.seckill.order.feign.GoodsFeignClient;
 import com.seckill.order.mapper.OrderMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,27 +30,24 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedissonClient redissonClient;
-    private final RocketMQTemplate rocketMQTemplate;
+    private final GoodsFeignClient goodsFeignClient;
 
     /**
      * 创建秒杀订单
      */
     @Transactional(rollbackFor = Exception.class)
-    public void createSeckillOrder(Long userId, Long goodsId, String orderId,
-                                   String goodsName, String goodsImage,
-                                   BigDecimal seckillPrice, Integer quantity) {
+    public void createSeckillOrder(Long userId, Long seckillId, Long orderId, BigDecimal amount) {
         // 获取分布式锁，防止重复下单
-        String lockKey = RedisConstants.LOCK_SECKILL + goodsId + ":" + userId;
+        String lockKey = RedisConstants.LOCK_SECKILL + seckillId + ":" + userId;
         RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            // 尝试获取锁，最多等待3秒，锁自动过期时间30秒
             if (!lock.tryLock(3, 30, TimeUnit.SECONDS)) {
                 throw new BusinessException(ResultCode.SECKILL_ILLEGAL_REQUEST);
             }
 
-            // 再次检查是否已存在订单
-            if (checkOrderExists(orderId)) {
+            // 检查是否已存在订单
+            if (orderMapper.selectById(orderId) != null) {
                 log.warn("订单已存在: orderId={}", orderId);
                 return;
             }
@@ -58,21 +56,14 @@ public class OrderService {
             Order order = new Order();
             order.setId(orderId);
             order.setUserId(userId);
-            order.setGoodsId(goodsId);
-            order.setGoodsName(goodsName);
-            order.setGoodsImage(goodsImage);
-            order.setSeckillPrice(seckillPrice);
-            order.setQuantity(quantity);
-            order.setTotalAmount(seckillPrice.multiply(BigDecimal.valueOf(quantity)));
+            order.setSeckillId(seckillId);
+            order.setSeckillPrice(amount);
+            order.setAmount(amount);
             order.setStatus(0); // 待支付
 
-            // 插入订单
             orderMapper.insert(order);
 
-            // 发送延时消息，实现订单超时取消
-            sendDelayMessage(orderId);
-
-            log.info("订单创建成功: orderId={}, userId={}, goodsId={}", orderId, userId, goodsId);
+            log.info("订单创建成功: orderId={}, userId={}, seckillId={}", orderId, userId, seckillId);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -85,50 +76,65 @@ public class OrderService {
     }
 
     /**
-     * 检查订单是否已存在
+     * 获取用户的所有订单
      */
-    private boolean checkOrderExists(String orderId) {
-        return orderMapper.selectById(orderId) != null;
+    public List<Order> getUserOrders(Long userId) {
+        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Order::getUserId, userId);
+        wrapper.orderByDesc(Order::getCreateTime);
+        return orderMapper.selectList(wrapper);
     }
 
     /**
-     * 发送延时消息，实现订单超时自动取消
-     */
-    private void sendDelayMessage(String orderId) {
-        // 使用 RocketMQ 延时消息，延时时间为订单超时时间
-        // DELAY_LEVEL_4 = 30秒，可配置
-        // 实际项目中应该使用自定义延时级别
-        try {
-            rocketMQTemplate.syncSend(MqConstants.SECKILL_ORDER_TOPIC + ":" + MqConstants.TAG_CANCEL_ORDER,
-                    orderId, 3000, 4); // level 4 = 30秒延时
-        } catch (Exception e) {
-            log.warn("发送延时消息失败: orderId={}", orderId, e);
-        }
-    }
-
-    /**
-     * 取消订单
+     * 取消订单（内部使用，无需用户ID）
      */
     @Transactional(rollbackFor = Exception.class)
-    public void cancelOrder(String orderId) {
+    public void cancelOrder(Long orderId) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
             log.warn("订单不存在: orderId={}", orderId);
             return;
         }
 
-        // 只有待支付状态的订单才能取消
         if (order.getStatus() != 0) {
             log.warn("订单状态不是待支付，无法取消: orderId={}, status={}", orderId, order.getStatus());
             return;
         }
 
-        // 更新订单状态为已取消
         order.setStatus(2);
         orderMapper.updateById(order);
 
         // 恢复库存
-        restoreStock(order.getGoodsId());
+        restoreStock(order.getSeckillId());
+
+        log.info("订单已取消: orderId={}", orderId);
+    }
+
+    /**
+     * 取消订单（用户操作，需要验证用户ID）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelOrder(Long orderId, Long userId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        }
+
+        // 验证订单属于当前用户
+        if (!order.getUserId().equals(userId)) {
+            throw new BusinessException("无权操作此订单");
+        }
+
+        if (order.getStatus() != 0) {
+            log.warn("订单状态不是待支付，无法取消: orderId={}, status={}", orderId, order.getStatus());
+            throw new BusinessException("订单状态异常，无法取消");
+        }
+
+        order.setStatus(2);
+        orderMapper.updateById(order);
+
+        // 恢复库存
+        restoreStock(order.getSeckillId());
 
         log.info("订单已取消: orderId={}", orderId);
     }
@@ -136,20 +142,33 @@ public class OrderService {
     /**
      * 恢复库存
      */
-    private void restoreStock(Long goodsId) {
-        String stockKey = RedisConstants.SECKILL_STOCK + goodsId;
+    private void restoreStock(Long seckillId) {
+        String stockKey = RedisConstants.SECKILL_STOCK + seckillId;
+        String soldKey = RedisConstants.SECKILL_SOLD + seckillId;
         redisTemplate.opsForValue().increment(stockKey);
-        log.info("库存已恢复: goodsId={}", goodsId);
+        redisTemplate.opsForValue().decrement(soldKey);
+        // 同步恢复数据库库存
+        try {
+            goodsFeignClient.restoreStock(seckillId);
+        } catch (Exception e) {
+            log.error("同步恢复数据库库存失败: seckillId={}", seckillId, e);
+        }
+        log.info("库存已恢复: seckillId={}", seckillId);
     }
 
     /**
      * 支付订单
      */
     @Transactional(rollbackFor = Exception.class)
-    public void payOrder(String orderId) {
+    public void payOrder(Long orderId, Long userId) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
             throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        }
+
+        // 验证订单属于当前用户
+        if (!order.getUserId().equals(userId)) {
+            throw new BusinessException("无权操作此订单");
         }
 
         if (order.getStatus() != 0) {
@@ -162,7 +181,6 @@ public class OrderService {
             throw new BusinessException(ResultCode.ORDER_TIMEOUT);
         }
 
-        // 更新订单状态为已支付
         order.setStatus(1);
         order.setPayTime(java.time.LocalDateTime.now());
         orderMapper.updateById(order);
@@ -173,7 +191,17 @@ public class OrderService {
     /**
      * 根据订单号查询订单
      */
-    public Order getOrderById(String orderId) {
+    public Order getOrderById(Long orderId) {
         return orderMapper.selectById(orderId);
+    }
+
+    /**
+     * 根据订单号和用户ID查询订单
+     */
+    public Order getOrderByIdAndUserId(Long orderId, Long userId) {
+        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Order::getId, orderId);
+        wrapper.eq(Order::getUserId, userId);
+        return orderMapper.selectOne(wrapper);
     }
 }

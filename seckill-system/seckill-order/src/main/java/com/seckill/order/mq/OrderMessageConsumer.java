@@ -23,13 +23,15 @@ public class OrderMessageConsumer implements RocketMQListener<String> {
     private final OrderService orderService;
 
     @Override
-    public void onMessage(String orderId) {
-        log.info("收到订单超时检查消息: orderId={}", orderId);
+    public void onMessage(String orderIdStr) {
+        log.info("收到订单超时检查消息: orderId={}", orderIdStr);
         try {
-            orderService.cancelOrder(orderId);
+            Long orderId = Long.parseLong(orderIdStr);
+            orderService.cancelOrder(orderId);  // 调用无用户ID的版本
+        } catch (NumberFormatException e) {
+            log.error("订单ID格式错误: {}", orderIdStr, e);
         } catch (Exception e) {
-            log.error("处理订单超时消息失败: orderId={}", orderId, e);
-            // 这里可以实现重试逻辑
+            log.error("处理订单超时消息失败: orderId={}", orderIdStr, e);
         }
     }
 }

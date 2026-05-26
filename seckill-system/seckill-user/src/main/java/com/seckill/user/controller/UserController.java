@@ -32,9 +32,9 @@ public class UserController {
      * 用户注册
      */
     @PostMapping("/register")
-    public Result<Void> register(@RequestBody User user) {
-        userService.register(user);
-        return Result.success("注册成功");
+    public Result<LoginResponse> register(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = userService.register(request);
+        return Result.success("注册成功", response);
     }
 
     /**
@@ -46,14 +46,32 @@ public class UserController {
             return Result.error("请先登录");
         }
         User user = userService.getUserById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
         return Result.success(user);
+    }
+
+    /**
+     * 更新用户信息（商家设置店铺名称等）
+     */
+    @PutMapping("/update")
+    public Result<String> updateUser(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @RequestBody User user) {
+        if (userId == null) {
+            return Result.error("请先登录");
+        }
+        user.setId(userId);
+        userService.updateUser(user);
+        return Result.success("更新成功");
     }
 
     /**
      * 退出登录
      */
     @PostMapping("/logout")
-    public Result<Void> logout(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+    public Result<String> logout(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
         if (userId != null) {
             userService.logout(userId);
         }

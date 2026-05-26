@@ -30,6 +30,11 @@ public class RedisConstants {
     public static final String SECKILL_STOCK = "seckill:stock:";
 
     /**
+     * 秒杀商品已售数量 Key
+     */
+    public static final String SECKILL_SOLD = "seckill:sold:";
+
+    /**
      * 秒杀商品库存 Lua 脚本，用于原子性扣减
      */
     public static final String SECKILL_STOCK_LUA = 
