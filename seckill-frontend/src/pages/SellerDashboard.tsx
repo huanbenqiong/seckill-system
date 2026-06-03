@@ -1,8 +1,31 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from 'recharts';
 import request from '../utils/request';
 import { AIChatWidget } from '../components/AIChatWidget';
 import { Navbar } from '../components/Navbar';
+
+// ====== 数据中心可视化（演示数据，前端写死） ======
+const SALES_TREND = [
+  { d: '周一', 销售额: 12400, 订单: 86 },
+  { d: '周二', 销售额: 15800, 订单: 102 },
+  { d: '周三', 销售额: 13900, 订单: 94 },
+  { d: '周四', 销售额: 21300, 订单: 143 },
+  { d: '周五', 销售额: 28600, 订单: 187 },
+  { d: '周六', 销售额: 35200, 订单: 241 },
+  { d: '周日', 销售额: 31800, 订单: 213 },
+];
+const CATEGORY_PIE = [
+  { name: '手机数码', value: 38 },
+  { name: '家用电器', value: 24 },
+  { name: '电脑办公', value: 16 },
+  { name: '服装鞋帽', value: 12 },
+  { name: '其他', value: 10 },
+];
+const PIE_COLORS = ['#667eea', '#764ba2', '#52c41a', '#faad14', '#ff7875'];
 
 interface Stats {
   totalProducts: number;
@@ -17,6 +40,8 @@ interface Stats {
 interface Product {
   id: number;
   goodsId: number;
+  name?: string;
+  goodsName?: string;
   seckillPrice: number;
   stockCount: number;
   soldCount: number;
@@ -38,6 +63,7 @@ interface Order {
 }
 
 interface ProductForm {
+  goodsName: string;
   seckillPrice: string;
   stockCount: string;
   startDate: string;
@@ -134,7 +160,7 @@ export const SellerDashboard: React.FC = () => {
   // Add product form
   const [showAddForm, setShowAddForm] = useState(false);
   const [productForm, setProductForm] = useState<ProductForm>({
-    seckillPrice: '', stockCount: '', startDate: '', endDate: '', imageUrl: '',
+    goodsName: '', seckillPrice: '', stockCount: '', startDate: '', endDate: '', imageUrl: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
@@ -226,6 +252,10 @@ export const SellerDashboard: React.FC = () => {
 
   // ---- CRUD handlers ----
   const handlePublishProduct = async () => {
+    if (!productForm.goodsName.trim()) {
+      alert('请填写商品名称');
+      return;
+    }
     if (!productForm.seckillPrice || !productForm.stockCount) {
       alert('请填写秒杀价格和库存数量');
       return;
@@ -233,6 +263,8 @@ export const SellerDashboard: React.FC = () => {
     setSubmitting(true);
     try {
       const res: any = await request.post('/seller/products', {
+        goodsName: productForm.goodsName.trim(),
+        name: productForm.goodsName.trim(),
         seckillPrice: parseFloat(productForm.seckillPrice),
         stockCount: parseInt(productForm.stockCount),
         startDate: productForm.startDate || new Date().toISOString(),
@@ -242,7 +274,7 @@ export const SellerDashboard: React.FC = () => {
       if (res.code === 200) {
         alert(`🎉 商品发布成功！ID: ${res.data?.seckillId || res.data?.id || ''}`);
         setShowAddForm(false);
-        setProductForm({ seckillPrice: '', stockCount: '', startDate: '', endDate: '', imageUrl: '' });
+        setProductForm({ goodsName: '', seckillPrice: '', stockCount: '', startDate: '', endDate: '', imageUrl: '' });
         fetchData();
       } else {
         alert(res.message || '发布失败');
@@ -405,12 +437,66 @@ export const SellerDashboard: React.FC = () => {
               </div>
             </div>
 
+            {/* ===== 数据可视化 ===== */}
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '28px 0 16px', color: 'var(--text-primary)' }}>数据可视化</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 16 }}>
+              {/* 销售额 + 订单趋势 */}
+              <div className="card" style={{ padding: '20px 22px' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 14, color: 'var(--text-primary)' }}>近 7 日销售趋势</div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <AreaChart data={SALES_TREND} margin={{ top: 6, right: 8, left: -8, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gSales" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#667eea" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#667eea" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#eef0f6" vertical={false} />
+                    <XAxis dataKey="d" tick={{ fontSize: 12, fill: '#a0aec0' }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#a0aec0' }} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e8eaf0', fontSize: 12 }} />
+                    <Area type="monotone" dataKey="销售额" stroke="#667eea" strokeWidth={2.5} fill="url(#gSales)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* 分类占比饼图 */}
+              <div className="card" style={{ padding: '20px 22px' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 14, color: 'var(--text-primary)' }}>商品分类销量占比</div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <PieChart>
+                    <Pie data={CATEGORY_PIE} dataKey="value" nameKey="name" cx="50%" cy="50%"
+                      innerRadius={52} outerRadius={84} paddingAngle={3}
+                      label={(e: any) => `${e.name} ${e.value}%`} labelLine={false}
+                      style={{ fontSize: 11 }}>
+                      {CATEGORY_PIE.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e8eaf0', fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 订单量柱状图 */}
+            <div className="card" style={{ padding: '20px 22px', marginTop: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 14, color: 'var(--text-primary)' }}>近 7 日订单量</div>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={SALES_TREND} margin={{ top: 6, right: 8, left: -8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eef0f6" vertical={false} />
+                  <XAxis dataKey="d" tick={{ fontSize: 12, fill: '#a0aec0' }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#a0aec0' }} tickLine={false} axisLine={false} />
+                  <Tooltip cursor={{ fill: 'rgba(102,126,234,0.06)' }} contentStyle={{ borderRadius: 10, border: '1px solid #e8eaf0', fontSize: 12 }} />
+                  <Bar dataKey="订单" fill="#764ba2" radius={[6, 6, 0, 0]} barSize={30} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
             <div style={{
               marginTop: 16, padding: '12px 16px',
               background: 'rgba(102,126,234,0.06)', borderRadius: 'var(--border-radius)',
               fontSize: 13, color: 'var(--text-muted)',
             }}>
-              💡 数据每 3 秒自动刷新，确保信息实时准确
+              💡 经营概览每 3 秒自动刷新；数据可视化为近期趋势示意
             </div>
           </div>
         )}
@@ -430,6 +516,16 @@ export const SellerDashboard: React.FC = () => {
               <div className="card" style={{ padding: 24, marginBottom: 20, border: '2px dashed var(--border-color)' }}>
                 <h4 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 600 }}>🚀 发布秒杀商品</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+                  <div className="form-group" style={{ marginBottom: 0, gridColumn: '1 / -1' }}>
+                    <label className="form-label">商品名称<span className="required">*</span></label>
+                    <input
+                      className="form-input"
+                      type="text"
+                      value={productForm.goodsName}
+                      onChange={e => setProductForm(p => ({ ...p, goodsName: e.target.value }))}
+                      placeholder="如：Apple iPhone 15 Pro 256GB 深空黑"
+                    />
+                  </div>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">秒杀价格（元）<span className="required">*</span></label>
                     <input
@@ -507,7 +603,7 @@ export const SellerDashboard: React.FC = () => {
                   <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                     <thead>
                       <tr>
-                        {['图片', '商品ID', '秒杀价', '库存', '已售', '状态', '开始时间', '结束时间', '操作'].map(h => (
+                        {['图片', '商品名称', '秒杀价', '库存', '已售', '状态', '开始时间', '结束时间', '操作'].map(h => (
                           <th key={h} style={{
                             padding: '12px 14px', textAlign: 'left', fontSize: 12, fontWeight: 600,
                             color: 'var(--text-muted)', background: '#fafafa',
@@ -535,7 +631,12 @@ export const SellerDashboard: React.FC = () => {
                               )}
                             </div>
                           </td>
-                          <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{p.id}</td>
+                          <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 500, maxWidth: 200 }}>
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {p.name || p.goodsName || `商品 #${p.id}`}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: 2 }}>ID: {p.id}</div>
+                          </td>
                           <td style={{ padding: '10px 14px', color: 'var(--color-accent)', fontWeight: 700 }}>¥{p.seckillPrice}</td>
                           <td style={{ padding: '10px 14px', fontWeight: 500 }}>{p.stockCount}</td>
                           <td style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>{p.soldCount ?? 0}</td>

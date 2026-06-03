@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>高并发秒杀系统 · 微服务 + Agent 智能增强 · 答辩演示</title>
+<style>
+  :root{
+    --bg0:#070a14; --bg1:#0c1326;
+    --ink:#eaeefb; --muted:#9aa6c4; --faint:#6b7796;
+    --line:rgba(255,255,255,.10);
+    --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.07);
+    --g1:#6e8bff; --g2:#9a6bff;            /* 微服务 紫蓝 */
+    --ag1:#22d3ee; --ag2:#34d399;          /* Agent 青绿 */
+    --warn:#fbbf24; --danger:#f87171; --ok:#34d399;
+    --grad:linear-gradient(135deg,var(--g1),var(--g2));
+    --grad-ag:linear-gradient(135deg,var(--ag1),var(--ag2));
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,sans-serif;
+    background:
+      radial-gradient(1200px 700px at 78% -10%,rgba(110,139,255,.16),transparent 60%),
+      radial-gradient(1000px 700px at 12% 110%,rgba(154,107,255,.14),transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    color:var(--ink); overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  .deck{position:fixed;inset:0}
+  .slide{position:absolute;inset:0;display:none;padding:4.6vh 6.4vw;flex-direction:column;justify-content:center;
+    animation:in .5s cubic-bezier(.16,1,.3,1)}
+  .slide.active{display:flex}
+  @keyframes in{from{opacity:0;transform:translateY(24px) scale(.992)}to{opacity:1;transform:none}}
+  .slide.center{align-items:center;text-align:center}
+
+  h1{font-size:clamp(32px,5.2vw,70px);font-weight:800;line-height:1.05;letter-spacing:-.02em}
+  h2{font-size:clamp(24px,3.3vw,44px);font-weight:800;line-height:1.08;letter-spacing:-.015em;margin-bottom:.45em}
+  h3{font-size:clamp(15px,1.45vw,20px);font-weight:700}
+  p{font-size:clamp(13.5px,1.3vw,18px);line-height:1.62;color:var(--muted)}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .grad-ag-text{background:var(--grad-ag);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .kicker{display:inline-flex;align-items:center;gap:9px;font-size:clamp(11px,1vw,13px);font-weight:700;
+    letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--line);background:var(--card);padding:6px 14px;border-radius:999px;margin-bottom:22px}
+  .kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px var(--g1)}
+  .kicker.ag .dot{background:var(--grad-ag);box-shadow:0 0 12px var(--ag1)}
+  .lead{max-width:64ch;font-size:clamp(14px,1.45vw,20px)}
+  .who{position:absolute;top:3.4vh;right:6.4vw;font-size:12px;font-weight:700;color:var(--ink);
+    border:1px solid var(--line);background:var(--card2);padding:5px 13px;border-radius:999px}
+  .who.ag{border-color:rgba(34,211,238,.5);color:#bdf3ff}
+
+  .grid{display:grid;gap:16px;width:100%}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;backdrop-filter:blur(8px);
+    transition:transform .3s,border-color .3s,background .3s}
+  .card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.22);background:var(--card2)}
+  .card .ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:22px;background:var(--grad);margin-bottom:12px;box-shadow:0 8px 20px rgba(110,139,255,.3)}
+  .card.ag .ic{background:var(--grad-ag);box-shadow:0 8px 20px rgba(34,211,238,.28)}
+  .card h3{margin-bottom:6px} .card p{font-size:clamp(12px,1.1vw,14.5px);line-height:1.5}
+  .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--ink);border:1px solid var(--line);
+    background:var(--card2);padding:4px 12px;border-radius:999px;margin:4px 6px 0 0}
+  .tag.ag{border-color:rgba(34,211,238,.4);color:#bdf3ff}
+
+  /* 架构 */
+  .arch{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+  .layer{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;width:100%}
+  .node{border:1px solid var(--line);background:var(--card);border-radius:13px;padding:11px 16px;text-align:center;min-width:115px;backdrop-filter:blur(6px)}
+  .node .t{font-weight:800;font-size:clamp(12.5px,1.2vw,15px)} .node .s{font-size:11px;color:var(--faint);margin-top:3px}
+  .node.svc{border-color:rgba(110,139,255,.5);background:linear-gradient(180deg,rgba(110,139,255,.16),rgba(110,139,255,.05))}
+  .node.gw{border-color:rgba(154,107,255,.6);background:linear-gradient(180deg,rgba(154,107,255,.2),rgba(154,107,255,.06));min-width:58%}
+  .node.ag{border-color:rgba(34,211,238,.6);background:linear-gradient(180deg,rgba(34,211,238,.16),rgba(34,211,238,.05))}
+  .node.mw{min-width:125px;border-style:dashed}
+  .arrow{color:var(--faint);font-size:18px;line-height:1}
+  .flowlabel{font-size:11px;color:var(--faint)}
+
+  /* 流程步骤 */
+  .flow{display:flex;align-items:stretch;gap:0;width:100%;flex-wrap:wrap;justify-content:center}
+  .step{flex:1;min-width:140px;border:1px solid var(--line);background:var(--card);border-radius:15px;padding:16px 14px;position:relative}
+  .step .n{position:absolute;top:-12px;left:14px;width:25px;height:25px;border-radius:50%;background:var(--grad-ag);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#06121a}
+  .step h3{font-size:14.5px;margin:6px 0 5px} .step p{font-size:12px;line-height:1.45}
+  .chev{display:flex;align-items:center;color:var(--ag1);font-size:22px;padding:0 3px;font-weight:700}
+
+  /* 指标 */
+  .metrics{display:flex;gap:30px;flex-wrap:wrap;margin-top:8px}
+  .metric .v{font-size:clamp(28px,3.8vw,52px);font-weight:800;line-height:1}
+  .metric .l{font-size:12.5px;color:var(--muted);margin-top:5px}
+
+  ul.feat{list-style:none;display:grid;gap:10px}
+  ul.feat li{display:flex;gap:11px;align-items:flex-start;font-size:clamp(12.5px,1.25vw,16px);color:var(--ink)}
+  ul.feat li::before{content:"";flex:0 0 auto;width:18px;height:18px;border-radius:6px;margin-top:2px;background:var(--grad);box-shadow:0 4px 12px rgba(110,139,255,.4)}
+  ul.feat.ag li::before{background:var(--grad-ag)}
+
+  code,.mono{font-family:"JetBrains Mono",Consolas,"Courier New",monospace}
+  .codeblock{background:rgba(3,7,18,.6);border:1px solid var(--line);border-radius:13px;padding:16px 18px;
+    font-size:clamp(11.5px,1.1vw,14.5px);line-height:1.65;color:#cfe0ff;white-space:pre;overflow:auto}
+  .codeblock .c1{color:#7c89b0} .codeblock .k{color:#9a6bff} .codeblock .s{color:#34d399} .codeblock .f{color:#22d3ee}
+
+  /* 表格 */
+  table{width:100%;border-collapse:collapse;font-size:clamp(12px,1.2vw,16px)}
+  th,td{padding:9px 12px;text-align:center;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:700;font-size:clamp(11px,1.05vw,13.5px);letter-spacing:.03em}
+  td{color:var(--ink)} tbody tr:hover{background:rgba(255,255,255,.03)}
+  .ok-c{color:var(--ok);font-weight:700} .warn-c{color:var(--warn);font-weight:700} .bad-c{color:var(--danger);font-weight:700}
+  .tbl-wrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+
+  /* 截图 / 视频占位 */
+  .shot{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#0a1020;aspect-ratio:16/10;display:flex}
+  .shot img,.shot video{width:100%;height:100%;object-fit:cover;display:block}
+  .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    text-align:center;padding:14px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.025),rgba(255,255,255,.025) 12px,transparent 12px,transparent 24px);
+    border:2px dashed rgba(255,255,255,.18);border-radius:14px;color:var(--muted)}
+  .ph .big{font-size:30px} .ph b{color:var(--ink);font-size:clamp(13px,1.3vw,16px)} .ph .fn{font-family:monospace;font-size:12px;color:var(--ag1)}
+  .ph .tip{font-size:11.5px;color:var(--faint);max-width:90%}
+
+  /* 视频卡片 + 灯箱 */
+  .vcard{cursor:pointer;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);transition:transform .3s,border-color .3s}
+  .vcard:hover{transform:translateY(-5px);border-color:rgba(34,211,238,.55)}
+  .vthumb{aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#13234d,#0a1830);position:relative}
+  .vplay{width:60px;height:60px;border-radius:50%;background:var(--grad-ag);color:#06121a;display:flex;align-items:center;justify-content:center;font-size:24px;padding-left:4px;box-shadow:0 12px 32px rgba(34,211,238,.45);transition:transform .3s}
+  .vcard:hover .vplay{transform:scale(1.1)}
+  .vbadge{position:absolute;top:12px;left:12px;font-size:11px;font-weight:700;color:#bdf3ff;background:rgba(0,0,0,.4);border:1px solid rgba(34,211,238,.4);padding:4px 10px;border-radius:999px}
+  .vmeta{padding:14px 16px} .vmeta b{display:block;font-size:15px;color:var(--ink);margin-bottom:3px} .vmeta span{font-size:12px;color:var(--faint)}
+  .vlightbox{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.86);backdrop-filter:blur(6px);animation:in .25s ease}
+  .vlightbox.open{display:flex}
+  .vlightbox video{max-width:88vw;max-height:82vh;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);background:#000}
+  .vclose{position:fixed;top:22px;right:30px;z-index:201;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1;cursor:pointer;transition:.2s}
+  .vclose:hover{background:rgba(255,255,255,.25);transform:rotate(90deg)}
+  .vtitle{position:fixed;top:30px;left:50%;transform:translateX(-50%);z-index:201;color:#fff;font-size:15px;font-weight:700}
+
+  .topbar{position:fixed;top:0;left:0;right:0;height:4px;z-index:50;background:rgba(255,255,255,.06)}
+  .topbar .fill{height:100%;width:0;background:var(--grad);transition:width .4s ease;box-shadow:0 0 14px var(--g1)}
+  .pageno{position:fixed;right:22px;bottom:16px;z-index:50;font-size:13px;color:var(--faint);font-weight:700}
+  .pageno b{color:var(--ink)}
+  .hint{position:fixed;left:22px;bottom:16px;z-index:50;font-size:12px;color:var(--faint)}
+  .nav{position:fixed;right:18px;top:50%;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:8px}
+  .nav button{width:10px;height:10px;border-radius:50%;border:1px solid var(--line);background:transparent;cursor:pointer;padding:0;transition:.25s}
+  .nav button.on{background:var(--grad);border-color:transparent;transform:scale(1.3)}
+  .corner{position:fixed;left:24px;top:18px;z-index:50;display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px}
+  .corner .lg{width:22px;height:22px;border-radius:7px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px}
+  .muted{color:var(--muted)} .small{font-size:12.5px} .hl{color:var(--ink);font-weight:700} .agpill{color:var(--ag1);font-weight:800}
+  .splitline{height:1px;background:var(--line);margin:16px 0;width:100%}
+  .cover-badges{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:26px}
+  .cover-badges .tag{font-size:13px;padding:7px 15px;margin:0}
+  .team{margin-top:30px;color:var(--faint);font-size:14px}
+  @media (max-width:760px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="fill" id="fill"></div></div>
+<div class="corner"><span class="lg">⚡</span><span>秒购 · Seckill</span></div>
+<div class="nav" id="nav"></div>
+<div class="pageno"><b id="cur">1</b> / <span id="tot">1</span></div>
+<div class="hint">← → / 空格 翻页 · F 全屏</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 封面 -->
+  <section class="slide center active">
+    <div class="kicker"><span class="dot"></span>软件服务工程 · 课程设计答辩</div>
+    <h1>高并发秒杀系统<br><span class="grad-text">微服务</span> + <span class="grad-ag-text">AI Agent</span> 智能增强</h1>
+    <p class="lead" style="margin-top:20px">基于 Spring Cloud Alibaba 的高并发交易内核，叠加大模型驱动的智能运营 Agent，<br>把"自然语言指令"直接转化为对微服务的真实操作。</p>
+    <div class="cover-badges">
+      <span class="tag">Spring Boot 3.2.5</span><span class="tag">Spring Cloud Alibaba</span>
+      <span class="tag">Redis · RocketMQ · Nacos</span><span class="tag">React + TypeScript</span>
+      <span class="tag ag">DeepSeek Agent</span><span class="tag ag">C# LLM Router</span>
+    </div>
+    <div class="team">主讲：高俊　|　Agent / LLM Router：赵紫东　|　团队：高俊 · 赵紫东 · 李恩云 · 陈宇轩</div>
+  </section>
+
+  <!-- 2 提纲 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Agenda · 提纲与分工</div>
+    <h2>四条主线，两位主讲</h2>
+    <div class="grid g4">
+      <div class="card"><div class="ic">01</div><h3>项目与架构</h3><p>需求 · 微服务架构 · 技术选型<br><span class="small muted">高俊</span></p></div>
+      <div class="card"><div class="ic">02</div><h3>高并发内核</h3><p>防超卖 · 异步 · 幂等 · 压测<br><span class="small muted">高俊</span></p></div>
+      <div class="card ag"><div class="ic">03</div><h3>Agent 智能层</h3><p>业务 Agent（高俊）+ LLM Router（<span class="agpill">赵紫东</span>）</p></div>
+      <div class="card"><div class="ic">04</div><h3>演示与成果</h3><p>压测数据 · 录屏 · 截图 · 总结<br><span class="small muted">高俊</span></p></div>
+    </div>
+    <p style="margin-top:22px" class="small">核心看点：<span class="hl">微服务</span>如何扛住高并发并防超卖，<span class="agpill">Agent</span> 如何让系统"会思考、能动手"。</p>
+  </section>
+
+  <!-- 3 背景 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Why · 背景与目标</div>
+    <h2>从"能成交"到"会运营"</h2>
+    <div class="grid g2">
+      <div class="card"><h3 style="font-size:18px;margin-bottom:10px">挑战一：高并发交易</h3>
+        <ul class="feat"><li>瞬时数万请求，<span class="hl">绝不能超卖</span></li><li>扣库存 / 建订单跨 Redis·MySQL，需最终一致</li><li>秒杀接口需毫秒级响应、不被打垮</li></ul></div>
+      <div class="card ag"><h3 style="font-size:18px;margin-bottom:10px">挑战二：运营决策</h3>
+        <ul class="feat ag"><li>系统只产出"数据"，不给"建议"</li><li>查库存 / 补货 / 看大盘全靠人工 SQL</li><li>能否用<span class="agpill">一句话</span>让系统自己完成？</li></ul></div>
+    </div>
+    <p style="margin-top:20px" class="lead"><span class="hl">微服务</span>解决"高并发安全交易"，<span class="agpill">AI Agent</span> 解决"智能运营决策"——两层物理隔离、各自演进。</p>
+  </section>
+
+  <!-- 4 架构 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Architecture · 整体架构</div>
+    <h2>五大微服务 + 智能 Agent 层</h2>
+    <div class="arch">
+      <div class="layer"><div class="node"><div class="t">React 前端</div><div class="s">用户端 / 商家端 · :3000</div></div></div>
+      <div class="arrow">↓</div>
+      <div class="layer"><div class="node gw"><div class="t">seckill-gateway · :8080</div><div class="s">JWT 鉴权 · Redisson 分布式限流 · 路由</div></div></div>
+      <div class="arrow">↓</div>
+      <div class="layer">
+        <div class="node svc"><div class="t">user · 8081</div><div class="s">登录 / 商家</div></div>
+        <div class="node svc"><div class="t">goods · 8082</div><div class="s">秒杀核心</div></div>
+        <div class="node svc"><div class="t">order · 8083</div><div class="s">订单 / 支付</div></div>
+        <div class="node ag"><div class="t">admin-agent · 8084</div><div class="s">智能数据代理</div></div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="layer">
+        <div class="node mw"><div class="t">MySQL</div><div class="s">持久化</div></div>
+        <div class="node mw"><div class="t">Redis+Redisson</div><div class="s">缓存/锁/限流</div></div>
+        <div class="node mw"><div class="t">RocketMQ</div><div class="s">异步消息</div></div>
+        <div class="node mw"><div class="t">Nacos</div><div class="s">注册/配置</div></div>
+      </div>
+    </div>
+    <p style="margin-top:18px;text-align:center" class="small">Nacos 注册发现 + OpenFeign 通信；秒杀链路 RocketMQ 异步解耦；<span class="agpill">Agent 层</span>只读数据、与交易核心零侵入。</p>
+  </section>
+
+  <!-- 5 技术栈 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Tech Stack · 技术选型</div>
+    <h2>工业级主流技术栈</h2>
+    <div class="grid g3">
+      <div class="card"><div class="ic">☕</div><h3>后端基座</h3><p>Java 17 · Spring Boot 3.2.5 · Spring Cloud Alibaba · MyBatis-Plus · Nacos</p></div>
+      <div class="card"><div class="ic">⚡</div><h3>高并发中间件</h3><p>Redis 7 + Lua 原子脚本 · Redisson 锁/令牌桶 · RocketMQ 异步削峰</p></div>
+      <div class="card"><div class="ic">🛢️</div><h3>存储与网关</h3><p>MySQL 8 · Druid · Cloud Gateway · JWT · Snowflake ID</p></div>
+      <div class="card"><div class="ic">💻</div><h3>前端</h3><p>React 18 + TypeScript · Vite · Axios · 实时库存 / 倒计时</p></div>
+      <div class="card ag"><div class="ic">🤖</div><h3>AI Agent</h3><p>Python FastAPI(:8099) · DeepSeek · Function Calling 工具调用</p></div>
+      <div class="card ag"><div class="ic">🔀</div><h3>LLM Router</h3><p>C# ASP.NET Core · Jan.ai 本地模型 · 重试 + 熔断</p></div>
+    </div>
+  </section>
+
+  <!-- 6 秒杀链路 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Core Flow · 秒杀链路</div>
+    <h2>一次秒杀请求的五道关卡</h2>
+    <div class="flow">
+      <div class="step"><span class="n" style="background:var(--grad)">1</span><h3>流量管控</h3><p>网关 JWT + 令牌桶限流，秒杀路径 50 QPS/IP，超限 429</p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n" style="background:var(--grad)">2</span><h3>原子扣减</h3><p>Redis Lua"检查+扣减"一步完成，亚毫秒级，杜绝超卖</p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n" style="background:var(--grad)">3</span><h3>异步创单</h3><p>发 RocketMQ 后立即返回，不等数据库</p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n" style="background:var(--grad)">4</span><h3>幂等落库</h3><p>Redisson 锁 + 订单唯一，双重幂等</p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n" style="background:var(--grad)">5</span><h3>最终一致</h3><p>OpenFeign 回调同步 MySQL</p></div>
+    </div>
+    <p style="margin-top:22px;text-align:center" class="lead">设计哲学：<span class="hl">能挡的挡在外面 · 能快的全在内存 · 能异步的都异步 · 能防的多重防</span></p>
+  </section>
+
+  <!-- 7 防超卖 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Key Tech 1 · 防超卖</div>
+    <h2>Redis Lua 原子扣减</h2>
+    <div class="grid g2" style="align-items:center">
+      <div>
+        <p class="lead" style="margin-bottom:14px">难点是<span class="hl">读与写之间的时间窗口</span>——数据库锁为一致性而非高吞吐设计。</p>
+        <ul class="feat">
+          <li>"检查库存 + 扣减"放进<span class="hl">同一段 Lua 脚本</span></li>
+          <li>Redis 单线程执行，天然原子、<span class="hl">无竞态</span></li>
+          <li>库存预热到内存，数据库不参与热路径</li>
+          <li>结果：<span class="ok-c">超卖率 = 0</span>，吞吐反而更高</li>
+        </ul>
+      </div>
+      <div class="codeblock"><span class="c1">-- 单线程原子执行，不可被打断</span>
+<span class="k">local</span> stock = redis.call(<span class="s">'get'</span>, KEYS[1])
+<span class="k">if</span> tonumber(stock) > 0 <span class="k">then</span>
+    redis.call(<span class="s">'decr'</span>, KEYS[1])
+    <span class="k">return</span> stock - 1   <span class="c1">-- 抢购成功</span>
+<span class="k">end</span>
+<span class="k">return</span> -1               <span class="c1">-- 库存不足</span></div>
+    </div>
+  </section>
+
+  <!-- 8 异步+幂等 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Key Tech 2 / 3 · 异步 & 幂等</div>
+    <h2>RocketMQ 削峰 + Redisson 幂等</h2>
+    <div class="grid g2">
+      <div class="card"><div class="ic">📨</div><h3 style="font-size:18px;margin-bottom:8px">异步解耦 · RocketMQ</h3>
+        <ul class="feat"><li>扣减成功即发消息、<span class="hl">立即返回</span></li><li>订单异步创建，削峰填谷</li><li>用户感知延迟 ≈ Redis 操作时间</li></ul></div>
+      <div class="card"><div class="ic">🔒</div><h3 style="font-size:18px;margin-bottom:8px">双重幂等 · Redisson</h3>
+        <ul class="feat"><li>第一道：分布式锁（<span class="mono">seckillId:userId</span>）</li><li>第二道：订单主键唯一检查</li><li>MQ 重复投递也<span class="hl">绝不重复下单</span></li></ul></div>
+    </div>
+    <p style="margin-top:18px;text-align:center" class="small">分布式幂等从来不是"单一银弹"，而是"多道防线"——这是我们排查到重复订单后的核心经验。</p>
+  </section>
+
+  <!-- 9 并发压测 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Benchmark · 并发压力测试</div>
+    <h2>压力测试结果</h2>
+    <div class="grid g2" style="align-items:start;gap:24px">
+      <div>
+        <h3 style="margin-bottom:10px">秒杀核心吞吐能力（不同并发档位）</h3>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>并发数</th><th>吞吐 QPS</th><th>成功率</th><th>错误</th><th>P99 时延</th></tr></thead>
+          <tbody>
+            <tr><td>100</td><td>1,210</td><td class="ok-c">100%</td><td class="ok-c">0</td><td>70ms</td></tr>
+            <tr><td>300</td><td>1,580</td><td class="ok-c">100%</td><td class="ok-c">0</td><td>180ms</td></tr>
+            <tr><td>500</td><td class="ok-c">1,840</td><td class="ok-c">100%</td><td class="ok-c">0</td><td>360ms</td></tr>
+            <tr><td>800</td><td>1,760</td><td class="ok-c">100%</td><td class="ok-c">0</td><td>620ms</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small" style="margin-top:8px">累计数万请求、并发最高 800，<span class="ok-c">峰值 1,840 QPS、0 错误 0 超时</span>。</p>
+      </div>
+      <div class="card" style="border-color:rgba(110,139,255,.35)">
+        <h3 style="margin-bottom:12px">稳定性与防护</h3>
+        <ul class="feat">
+          <li>全程 <span class="hl">0 个 5xx / 超时</span>，系统零雪崩</li>
+          <li>Redis Lua 原子扣减，秒杀全程 <span class="hl">0 超卖</span></li>
+          <li>网关令牌桶限流：突发超额请求被 <span class="hl">429 平滑拒绝</span></li>
+          <li>P99 时延随并发平稳增长，<span class="hl">无毛刺</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="metrics" style="margin-top:16px;justify-content:center">
+      <div class="metric" style="text-align:center"><div class="v grad-text">1,840</div><div class="l">峰值 QPS</div></div>
+      <div class="metric" style="text-align:center"><div class="v grad-text">0</div><div class="l">超卖 · 错误 · 雪崩</div></div>
+      <div class="metric" style="text-align:center"><div class="v grad-ag-text">100%</div><div class="l">请求成功率</div></div>
+    </div>
+  </section>
+
+  <!-- 10 业务Agent 亮点 -->
+  <section class="slide center">
+    <div class="who ag">讲解 · 高俊</div>
+    <div class="kicker ag"><span class="dot"></span>The Highlight · 核心亮点</div>
+    <h2 style="font-size:clamp(26px,4.2vw,54px)">当 <span class="grad-ag-text">Agent</span> 遇上 <span class="grad-text">微服务</span></h2>
+    <p class="lead" style="margin-top:16px">运营人员不再点按钮、敲 SQL，而是直接对系统说一句话：</p>
+    <div class="card ag" style="margin-top:22px;max-width:760px;font-size:clamp(16px,2vw,26px);font-weight:700;color:var(--ink)">
+      💬 "帮我把库存低于 10 的商品，全部补到 50"
+    </div>
+    <p class="lead" style="margin-top:20px">大模型理解意图 → 自动选择工具 → 调用真实微服务接口 → 操作 Redis / MySQL → 用人话回报。<br><span class="agpill">这就是"微服务 + Agent"的真正价值。</span></p>
+    <div style="margin-top:18px">
+      <span class="tag ag">📦 库存洞察</span><span class="tag ag">🚀 一键补货</span><span class="tag ag">📊 经营大盘</span>
+      <span class="tag ag">🏆 销售排行</span><span class="tag ag">⏰ 活动延期</span><span class="tag ag">🧠 多轮对话</span>
+    </div>
+  </section>
+
+  <!-- 11 业务Agent 工作原理 -->
+  <section class="slide">
+    <div class="who ag">讲解 · 高俊</div>
+    <div class="kicker ag"><span class="dot"></span>How it works · 业务 Agent 原理</div>
+    <h2>自然语言 → 真实操作 的闭环</h2>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><h3>用户提问</h3><p>前端 AI 助手发自然语言到 Python Agent（:8099）</p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n">2</span><h3>LLM 理解</h3><p>DeepSeek 通过 Function Calling 判断意图、选工具与参数</p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n">3</span><h3>调用微服务</h3><p>工具用 HTTP 调 admin-agent 的 REST 接口（带 Token）</p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n">4</span><h3>执行操作</h3><p>admin-agent 操作 Redis / MySQL，返回结构化结果</p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n">5</span><h3>总结回复</h3><p>LLM 把结果整理成自然语言回传</p></div>
+    </div>
+    <div class="splitline"></div>
+    <p style="text-align:center" class="small"><span class="agpill">Agent = 大模型(决策) + 工具(行动)</span>；微服务的 REST 接口就是 Agent 的"手脚"。Agent 不碰交易核心，只经标准接口编排。</p>
+  </section>
+
+  <!-- 12 业务Agent 架构 -->
+  <section class="slide">
+    <div class="who ag">讲解 · 高俊</div>
+    <div class="kicker ag"><span class="dot"></span>Agent Architecture · 业务 Agent 架构</div>
+    <h2>大模型编排层 × 数据代理微服务</h2>
+    <div class="arch">
+      <div class="layer"><div class="node ag" style="min-width:46%"><div class="t">AI 商家助手（前端浮窗 · 可拖拽）</div><div class="s">自然语言输入 / 回复</div></div></div>
+      <div class="arrow">↓ &nbsp;<span class="flowlabel">HTTP /chat</span></div>
+      <div class="layer"><div class="node ag" style="min-width:60%"><div class="t">Python Agent · FastAPI :8099</div><div class="s">DeepSeek LLM · Function Calling · stock_tools / data_tools</div></div></div>
+      <div class="arrow">↓ &nbsp;<span class="flowlabel">REST + X-Agent-Token</span></div>
+      <div class="layer"><div class="node svc" style="min-width:60%"><div class="t">seckill-admin-agent（智能数据代理微服务 · :8084）</div><div class="s">/goods/restock · /low-stock · /data/dashboard · /sales-rank …</div></div></div>
+      <div class="arrow">↓</div>
+      <div class="layer"><div class="node mw"><div class="t">Redis</div><div class="s">实时库存</div></div><div class="node mw"><div class="t">MySQL</div><div class="s">订单 / 商品</div></div></div>
+    </div>
+    <p style="margin-top:16px;text-align:center" class="small">关注点分离：LLM 负责"听懂与决策"，admin-agent 负责"安全执行"，交易核心完全不受影响。</p>
+  </section>
+
+  <!-- 13 LLM Router 定位（赵紫东） -->
+  <section class="slide">
+    <div class="who ag">讲解 · 赵紫东</div>
+    <div class="kicker ag"><span class="dot"></span>LLM Router · 模型接入层</div>
+    <h2>C# Agent LLM Router：让大模型"可切换、可靠"</h2>
+    <div class="grid g2" style="align-items:center">
+      <div>
+        <p class="lead" style="margin-bottom:12px">独立的 ASP.NET Core 服务，作为<span class="hl">统一的大模型网关</span>，对接 Jan.ai 本地模型，供 Java / Python 侧调用。</p>
+        <ul class="feat ag">
+          <li>屏蔽底层模型差异，业务侧只调一个 <span class="mono">/api/agent/chat</span></li>
+          <li>运行时<span class="hl">热切换模型</span>，无需改代码、无需重启</li>
+          <li>OpenAI 兼容协议，未来可平滑接入云端模型</li>
+          <li>内置容错，让 LLM 调用从"能用"升级为"可靠"</li>
+        </ul>
+      </div>
+      <div class="codeblock"><span class="c1"># 统一入口，业务侧无感知</span>
+POST <span class="f">/api/agent/chat</span>
+{ <span class="s">"messages"</span>:[…],
+  <span class="s">"model"</span>:<span class="s">"minimax-m2.7"</span> }   <span class="c1"># 可选</span>
+
+<span class="c1"># 运行时切换默认模型</span>
+POST <span class="f">/api/agent/switch</span>?model=…
+<span class="c1"># 查询可用模型 / 健康检查</span>
+GET  <span class="f">/api/agent/models</span>   GET <span class="f">/health</span></div>
+    </div>
+  </section>
+
+  <!-- 14 LLM Router 架构与切换（赵紫东） -->
+  <section class="slide">
+    <div class="who ag">讲解 · 赵紫东</div>
+    <div class="kicker ag"><span class="dot"></span>LLM Router · 架构与模型路由</div>
+    <h2>四大模块 + 四级切换优先级</h2>
+    <div class="grid g4" style="margin-bottom:16px">
+      <div class="card ag"><div class="ic">🧭</div><h3>LlmRouter</h3><p>模型选择与调用路由的调度中心</p></div>
+      <div class="card ag"><div class="ic">🔌</div><h3>JanLlmService</h3><p>OpenAI 兼容 HTTP 调用 Jan.ai</p></div>
+      <div class="card ag"><div class="ic">🛡️</div><h3>ResilienceHandler</h3><p>重试 + 熔断（Polly）</p></div>
+      <div class="card ag"><div class="ic">⚙️</div><h3>ConfigLoader</h3><p>config.yaml 热加载模型列表</p></div>
+    </div>
+    <h3 style="margin-bottom:10px">模型切换优先级（从高到低）</h3>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><h3>请求体</h3><p>body 中的 <span class="mono">"model"</span></p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n">2</span><h3>Header</h3><p><span class="mono">X-Model: xxx</span></p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n">3</span><h3>Query</h3><p><span class="mono">?model=xxx</span></p></div>
+      <div class="chev">›</div>
+      <div class="step"><span class="n">4</span><h3>默认</h3><p>config.yaml 的 defaultModel</p></div>
+    </div>
+  </section>
+
+  <!-- 15 LLM Router 韧性（赵紫东） -->
+  <section class="slide">
+    <div class="who ag">讲解 · 赵紫东</div>
+    <div class="kicker ag"><span class="dot"></span>LLM Router · 韧性机制</div>
+    <h2>重试 + 熔断：故障不蔓延</h2>
+    <div class="grid g2">
+      <div class="card ag"><div class="ic">🔁</div><h3 style="font-size:18px;margin-bottom:8px">重试 · 指数退避</h3>
+        <ul class="feat ag"><li>针对 5xx / 429 / 连接失败等<span class="hl">临时故障</span></li><li>退避 1s → 2s → 4s，最多 3 次、上限 10s</li><li>瞬时抖动大概率一次重试即恢复</li></ul></div>
+      <div class="card ag"><div class="ic">⛔</div><h3 style="font-size:18px;margin-bottom:8px">熔断 · 状态机</h3>
+        <ul class="feat ag"><li>连续失败 5 次 → 打开熔断，<span class="hl">快速失败</span></li><li>休眠 30s 进入半开，试探性放行</li><li>成功则恢复，失败则继续熔断</li></ul></div>
+    </div>
+    <p style="margin-top:18px;text-align:center" class="small">当 Jan.ai 过载时，Router 快速失败而非堆积请求——<span class="hl">既保护调用方，也保护模型后端</span>。还支持 API Key 认证、Request-ID 全链路追踪、RFC 7807 标准错误。</p>
+  </section>
+
+  <!-- 16 数据中心可视化（截图占位） -->
+  <section class="slide">
+    <div class="who">讲解 · 高俊</div>
+    <div class="kicker"><span class="dot"></span>Live Demo · 商家数据中心</div>
+    <h2>经营数据可视化看板</h2>
+    <div class="grid g2" style="align-items:center">
+      <div class="shot">
+        <img src="shots/seller-dashboard.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="ph" style="display:flex">
+          <span class="big">📷</span><b>商家「数据中心」截图</b>
+          <span class="fn">保存为 shots/seller-dashboard.png</span>
+          <span class="tip">截取：经营概览卡片 + 近7日销售趋势(面积图) + 分类占比(饼图) + 订单量(柱状图)</span>
+        </div>
+      </div>
+      <div>
+        <ul class="feat">
+          <li>实时经营概览：商品 / 已售 / 订单 / 待支付 / 销售额</li>
+          <li><span class="hl">近 7 日销售趋势</span>（面积图）+ <span class="hl">分类占比</span>（饼图）</li>
+          <li><span class="hl">近 7 日订单量</span>（柱状图），Recharts 渲染</li>
+          <li>经营概览每 3 秒自动刷新</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17 演示视频 -->
+  <section class="slide">
+    <div class="who">讲解 · 高俊</div>
+    <div class="kicker"><span class="dot"></span>Demo Videos · 录屏演示</div>
+    <h2>三段实机演示</h2>
+    <div class="grid g3">
+      <div class="vcard" data-src="videos/1-user-buy.mp4" data-title="① 用户购买">
+        <div class="vthumb"><span class="vbadge">DEMO 01</span><span class="vplay">▶</span></div>
+        <div class="vmeta"><b>① 用户购买</b><span>登录 → 浏览 → 秒杀 → 下单 → 支付</span></div>
+      </div>
+      <div class="vcard" data-src="videos/2-seller-publish.mp4" data-title="② 商家发布商品">
+        <div class="vthumb"><span class="vbadge">DEMO 02</span><span class="vplay">▶</span></div>
+        <div class="vmeta"><b>② 商家发布商品</b><span>商家后台 → 发布商品 → 上传图片 → 上架</span></div>
+      </div>
+      <div class="vcard" data-src="videos/3-agent.mp4" data-title="③ Agent 自动补货 + 数据分析">
+        <div class="vthumb"><span class="vbadge">DEMO 03</span><span class="vplay">▶</span></div>
+        <div class="vmeta"><b>③ Agent 自动补货 + 分析</b><span>对 AI 助手说一句话 → 自动补货 → 数据分析</span></div>
+      </div>
+    </div>
+    <p class="small" style="text-align:center;margin-top:16px;color:var(--faint)">点击任一视频即可<span class="hl">放大播放</span>；按 <span class="mono">Esc</span> 或点击空白处 / 右上角 × 关闭。</p>
+  </section>
+
+  <!-- 18 微服务关键设计要点 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Key Points · 关键设计要点</div>
+    <h2>微服务架构下的四个关键设计</h2>
+    <div class="grid g4">
+      <div class="card"><h3 style="margin-bottom:6px">🔗 服务注册与通信</h3><p>Nacos 注册发现 + <span class="hl">OpenFeign 声明式调用</span>，服务解耦自治</p></div>
+      <div class="card"><h3 style="margin-bottom:6px">🧨 高并发防超卖</h3><p>goods 服务用 <span class="hl">Redis Lua 原子脚本</span>，秒杀零超卖</p></div>
+      <div class="card"><h3 style="margin-bottom:6px">🧩 异步解耦</h3><p>RocketMQ 在 goods / order 间<span class="hl">异步削峰</span>，最终一致</p></div>
+      <div class="card ag"><h3 style="margin-bottom:6px">🤖 Agent 编排服务</h3><p>LLM <span class="hl">Function Calling</span> 调度微服务 REST 接口完成运营动作</p></div>
+    </div>
+    <p style="margin-top:18px;text-align:center" class="small">微服务把复杂系统拆成<span class="hl">可独立演进的服务</span>，Agent 再以标准接口把它们<span class="agpill">智能地编排</span>起来——这正是本项目的核心设计思想。</p>
+  </section>
+
+  <!-- 19 分工 -->
+  <section class="slide">
+    <div class="kicker"><span class="dot"></span>Team · 分工</div>
+    <h2>团队分工</h2>
+    <div class="grid g4">
+      <div class="card"><div class="ic">🧭</div><h3>高俊（组长）</h3><p>整体架构 · 网关鉴权与限流 · 业务 Agent · 集成与压测</p></div>
+      <div class="card ag"><div class="ic">🤖</div><h3>赵紫东</h3><p>C# LLM Router（模型路由/切换/熔断）· Agent 原理</p></div>
+      <div class="card"><div class="ic">⚡</div><h3>李恩云</h3><p>商品/订单服务 · RocketMQ 消费 · Redisson 分布式锁</p></div>
+      <div class="card"><div class="ic">💻</div><h3>陈宇轩</h3><p>React 前端 · admin-agent 数据代理 · 数据可视化</p></div>
+    </div>
+    <p style="margin-top:24px;text-align:center" class="lead">四人协作，覆盖<span class="hl">网关 → 交易内核 → 异步 → Agent → 前端</span>完整链路。</p>
+  </section>
+
+  <!-- 22 总结 -->
+  <section class="slide center">
+    <div class="kicker ag"><span class="dot"></span>Summary · 总结与展望</div>
+    <h2 style="font-size:clamp(26px,4.2vw,54px)">微服务负责<span class="grad-text">稳</span>，Agent 负责<span class="grad-ag-text">智</span></h2>
+    <p class="lead" style="margin-top:18px">
+      工业级微服务方案守住高并发交易的"稳"（实测峰值 1800+ QPS、0 错误 0 超卖），<br>
+      大模型 Agent 把运营从"人工 SQL"升级为"一句话搞定"的"智"。<br>
+      两层<span class="hl">标准接口协作、互不侵入</span>，为后续叠加更多智能能力留足空间。
+    </p>
+    <div class="cover-badges" style="margin-top:26px">
+      <span class="tag">未来：WebSocket 实时预警</span><span class="tag ag">Agent 自动巡检</span><span class="tag">分布式压测调优</span>
+    </div>
+    <h1 style="margin-top:36px;font-size:clamp(28px,4.6vw,60px)" class="grad-text">谢谢聆听 · 敬请指正</h1>
+  </section>
+
+</div>
+
+<!-- 视频灯箱 -->
+<div class="vlightbox" id="vlb">
+  <div class="vtitle" id="vtitle"></div>
+  <button class="vclose" id="vclose" title="关闭">×</button>
+  <video id="vplayer" controls playsinline></video>
+</div>
+
+<script>
+  const deck=document.getElementById('deck');
+  const slides=[...deck.querySelectorAll('.slide')];
+  const nav=document.getElementById('nav');
+  const fill=document.getElementById('fill'), cur=document.getElementById('cur');
+  document.getElementById('tot').textContent=slides.length;
+  let i=0;
+  slides.forEach((_,k)=>{const b=document.createElement('button');b.onclick=()=>go(k);nav.appendChild(b);});
+  const dots=[...nav.children];
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    fill.style.width=(i/(slides.length-1)*100)+'%'; cur.textContent=i+1;
+  }
+  function next(){go(i+1)} function prev(){go(i-1)}
+  // ===== 视频灯箱 =====
+  const vlb=document.getElementById('vlb'), vplayer=document.getElementById('vplayer'),
+        vclose=document.getElementById('vclose'), vtitle=document.getElementById('vtitle');
+  function openVideo(src,title){ vplayer.src=src; vtitle.textContent=title||''; vlb.classList.add('open'); vplayer.play().catch(()=>{}); }
+  function closeVideo(){ vlb.classList.remove('open'); try{vplayer.pause();}catch(_){} vplayer.removeAttribute('src'); vplayer.load(); }
+  const lbOpen=()=>vlb.classList.contains('open');
+  document.querySelectorAll('.vcard').forEach(c=>c.addEventListener('click',e=>{ e.stopPropagation(); openVideo(c.dataset.src, c.dataset.title); }));
+  vclose.addEventListener('click',e=>{ e.stopPropagation(); closeVideo(); });
+  vlb.addEventListener('click',e=>{ e.stopPropagation(); if(e.target===vlb) closeVideo(); });
+
+  document.addEventListener('keydown',e=>{
+    if(lbOpen()){ if(e.key==='Escape') closeVideo(); return; }   // 弹窗打开时不翻页
+    if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){e.preventDefault();next()}
+    else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){e.preventDefault();prev()}
+    else if(e.key==='Home'){go(0)} else if(e.key==='End'){go(slides.length-1)}
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+  });
+  deck.addEventListener('click',e=>{ if(lbOpen())return; if(e.target.closest('a,button,video,table,input,.vcard'))return; (e.clientX>window.innerWidth*0.5?next:prev)(); });
+  let sx=0; deck.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
+  deck.addEventListener('touchend',e=>{if(lbOpen())return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)(dx<0?next:prev)();},{passive:true});
+  go(0);
+</script>
+</body>
+</html>

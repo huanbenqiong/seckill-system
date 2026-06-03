@@ -35,7 +35,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
             "/seller/dashboard",
             "/seller/products",
             "/seller/orders",
-            "/seller/statistics"
+            "/seller/statistics",
+            "/seller/images"   // 商品图片为公开资源，浏览器 <img> 请求不携带 token
     );
 
     @Override

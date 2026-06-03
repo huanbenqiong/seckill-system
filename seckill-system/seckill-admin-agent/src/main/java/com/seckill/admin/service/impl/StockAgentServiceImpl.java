@@ -39,7 +39,7 @@ public class StockAgentServiceImpl implements StockAgentService {
         List<SeckillGoods> lowStock = new ArrayList<>();
         for (SeckillGoods goods : all) {
             Integer stock = getStock(goods.getId());
-            if (stock != null && stock <= threshold) {
+            if (stock != null && stock < threshold) {
                 goods.setStockCount(stock);
                 lowStock.add(goods);
             }
@@ -51,26 +51,26 @@ public class StockAgentServiceImpl implements StockAgentService {
     public int addStock(Long goodsId, int addCount) {
         String stockKey = RedisConstants.SECKILL_STOCK + goodsId;
 
-        // Redis 原子递增
-        Long newStock = redisTemplate.opsForValue().increment(stockKey, addCount);
-        if (newStock == null) {
-            // Redis 没有 key，先初始化再增加
-            SeckillGoods goods = seckillGoodsMapper.selectById(goodsId);
-            if (goods != null) {
-                redisTemplate.opsForValue().set(stockKey, goods.getStockCount() + addCount);
-                newStock = goods.getStockCount() + addCount + 0L;
-            }
-        }
-
-        // 同步更新数据库
+        // 1. 先从数据库读当前库存（DB 是最终一致性来源）
         SeckillGoods goods = seckillGoodsMapper.selectById(goodsId);
-        if (goods != null) {
-            goods.setStockCount(goods.getStockCount() + addCount);
-            seckillGoodsMapper.updateById(goods);
-            log.info("[AI补货] goodsId={} 追加库存 {}，当前库存={}", goodsId, addCount, goods.getStockCount());
+        if (goods == null) {
+            log.warn("[AI补货] goodsId={} 商品不存在", goodsId);
+            return 0;
         }
+        int currentDbStock = goods.getStockCount() != null ? goods.getStockCount() : 0;
+        int newStockValue = currentDbStock + addCount;
 
-        return newStock != null ? newStock.intValue() : 0;
+        // 2. 直接 SET Redis（无论 key 是否存在均覆盖写入，避免 key 不存在时
+        //    INCRBY 将初始值设为 addCount 而非 currentStock+addCount 的 Bug）
+        redisTemplate.opsForValue().set(stockKey, newStockValue);
+
+        // 3. 同步更新数据库
+        goods.setStockCount(newStockValue);
+        seckillGoodsMapper.updateById(goods);
+        log.info("[AI补货] goodsId={} DB库存 {} → {}（追加 {}）",
+                goodsId, currentDbStock, newStockValue, addCount);
+
+        return newStockValue;
     }
 
     @Override

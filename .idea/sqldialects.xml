@@ -2,6 +2,7 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/seckill-system/sql/add_goods_fields.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/seckill-system/sql/local_image_goods.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/seckill-system/sql/test_data_50goods.sql" dialect="MySQL" />
   </component>
 </project>

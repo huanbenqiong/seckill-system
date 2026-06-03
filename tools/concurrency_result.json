@@ -1,0 +1,70 @@
+{
+  "url": "http://localhost:8080/api/goods/list",
+  "tested_at": "2026-06-03 18:12:19",
+  "peak_qps": 1807.4,
+  "peak_concurrency": 200,
+  "avg_success_rate": 10.54,
+  "best_p95_ms": 72.47,
+  "levels": [
+    {
+      "concurrency": 20,
+      "requests": 2000,
+      "success": 247,
+      "failed": 1753,
+      "success_rate": 12.35,
+      "wall_seconds": 2.44,
+      "qps": 819.5,
+      "avg_ms": 24.0,
+      "p50_ms": 5.33,
+      "p90_ms": 126.93,
+      "p95_ms": 161.88,
+      "p99_ms": 198.85,
+      "max_ms": 226.8
+    },
+    {
+      "concurrency": 50,
+      "requests": 2000,
+      "success": 198,
+      "failed": 1802,
+      "success_rate": 9.9,
+      "wall_seconds": 1.995,
+      "qps": 1002.4,
+      "avg_ms": 49.58,
+      "p50_ms": 8.31,
+      "p90_ms": 39.19,
+      "p95_ms": 412.44,
+      "p99_ms": 467.16,
+      "max_ms": 484.32
+    },
+    {
+      "concurrency": 100,
+      "requests": 2000,
+      "success": 299,
+      "failed": 1701,
+      "success_rate": 14.95,
+      "wall_seconds": 2.862,
+      "qps": 698.9,
+      "avg_ms": 139.51,
+      "p50_ms": 8.69,
+      "p90_ms": 817.34,
+      "p95_ms": 973.44,
+      "p99_ms": 1005.52,
+      "max_ms": 1027.92
+    },
+    {
+      "concurrency": 200,
+      "requests": 2000,
+      "success": 99,
+      "failed": 1901,
+      "success_rate": 4.95,
+      "wall_seconds": 1.107,
+      "qps": 1807.4,
+      "avg_ms": 79.44,
+      "p50_ms": 29.23,
+      "p90_ms": 46.16,
+      "p95_ms": 72.47,
+      "p99_ms": 1075.28,
+      "max_ms": 1091.39
+    }
+  ]
+}

@@ -6,6 +6,8 @@ import { Navbar } from '../components/Navbar';
 interface Goods {
   id: number;
   goodsId: number;
+  name?: string;
+  goodsName?: string;
   seckillPrice: number;
   stockCount: number;
   soldCount: number;
@@ -24,6 +26,8 @@ export const GoodsList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('default');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 12;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,12 +59,16 @@ export const GoodsList: React.FC = () => {
 
   // 搜索 + 筛选 + 排序（全客户端）
   const filtered = useMemo(() => {
+    setPage(1); // 筛选变化时回到第一页
     let list = [...goodsList];
 
-    // 搜索（按商品 ID）
+    // 搜索（按商品名称或 ID）
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      list = list.filter(g => String(g.id).includes(q));
+      list = list.filter(g =>
+        String(g.id).includes(q) ||
+        (g.name || g.goodsName || '').toLowerCase().includes(q)
+      );
     }
 
     // 状态筛选
@@ -78,6 +86,9 @@ export const GoodsList: React.FC = () => {
 
     return list;
   }, [goodsList, search, statusFilter, sortKey]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const getStatusText = (status: number) => {
     switch (status) {
@@ -157,7 +168,7 @@ export const GoodsList: React.FC = () => {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="搜索商品 ID..."
+              placeholder="搜索商品名称或 ID..."
             />
           </div>
 
@@ -210,9 +221,11 @@ export const GoodsList: React.FC = () => {
             )}
           </div>
         ) : (
+          <>
           <div className="goods-grid">
-            {filtered.map(goods => {
+            {pageItems.map(goods => {
               const soldPct = getSoldPercent(goods);
+              const displayName = goods.name || goods.goodsName || `秒杀商品 #${goods.id}`;
               return (
                 <div
                   key={goods.id}
@@ -232,7 +245,7 @@ export const GoodsList: React.FC = () => {
                           <circle cx="8.5" cy="8.5" r="1.5"/>
                           <path d="M21 15l-5-5L5 21"/>
                         </svg>
-                        <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>秒杀商品 #{goods.id}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>{displayName}</span>
                       </div>
                     )}
                     <div className="goods-badge-wrap">
@@ -245,7 +258,7 @@ export const GoodsList: React.FC = () => {
                   {/* 商品信息 */}
                   <div className="goods-info">
                     <div className="goods-title">
-                      秒杀商品 #{goods.id}
+                      {displayName}
                     </div>
                     <div className="goods-price-row">
                       <span className="seckill-price">¥{goods.seckillPrice}</span>
@@ -284,6 +297,49 @@ export const GoodsList: React.FC = () => {
               );
             })}
           </div>
+
+          {/* 分页 */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginTop: 32, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  className="btn btn-outline btn-sm"
+                  disabled={page === 1}
+                  onClick={() => setPage(p => p - 1)}
+                  style={{ minWidth: 72 }}
+                >
+                  上一页
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    style={{
+                      width: 36, height: 36, borderRadius: 8, border: 'none', cursor: 'pointer',
+                      fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
+                      background: p === page ? 'var(--gradient-primary)' : 'white',
+                      color: p === page ? 'white' : 'var(--text-secondary)',
+                      boxShadow: p === page ? 'var(--shadow)' : 'none',
+                    }}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  className="btn btn-outline btn-sm"
+                  disabled={page === totalPages}
+                  onClick={() => setPage(p => p + 1)}
+                  style={{ minWidth: 72 }}
+                >
+                  下一页
+                </button>
+              </div>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                第 {page} 页 / 共 {totalPages} 页 · {filtered.length} 件商品
+              </span>
+            </div>
+          )}
+          </>
         )}
       </div>
     </div>
