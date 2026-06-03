@@ -114,6 +114,17 @@
   .ph .big{font-size:30px} .ph b{color:var(--ink);font-size:clamp(13px,1.3vw,16px)} .ph .fn{font-family:monospace;font-size:12px;color:var(--ag1)}
   .ph .tip{font-size:11.5px;color:var(--faint);max-width:90%}
 
+  /* 赵紫东 · 图片主导页（图片完整展示，不裁切） */
+  .figslide{padding-top:3.2vh;padding-bottom:3.0vh;justify-content:flex-start}
+  .fighead{margin-bottom:10px}
+  .fighead .h{font-size:clamp(19px,2.5vw,31px);font-weight:800;letter-spacing:-.01em;line-height:1.1}
+  .figstage{flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,rgba(34,211,238,.06),rgba(154,107,255,.04));
+    border:1px solid rgba(34,211,238,.22);border-radius:16px;padding:14px}
+  .figstage img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;
+    border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+  .figcap{margin-top:10px;text-align:center;font-size:clamp(11.5px,1.15vw,14px);line-height:1.5}
+
   /* 视频卡片 + 灯箱 */
   .vcard{cursor:pointer;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);transition:transform .3s,border-color .3s}
   .vcard:hover{transform:translateY(-5px);border-color:rgba(34,211,238,.55)}
@@ -378,71 +389,84 @@
     <p style="margin-top:16px;text-align:center" class="small">关注点分离：LLM 负责"听懂与决策"，admin-agent 负责"安全执行"，交易核心完全不受影响。</p>
   </section>
 
-  <!-- 13 LLM Router 定位（赵紫东） -->
-  <section class="slide">
+  <!-- 13 LLM Router · 痛点与总览（赵紫东 · 图1） -->
+  <section class="slide figslide">
     <div class="who ag">讲解 · 赵紫东</div>
-    <div class="kicker ag"><span class="dot"></span>LLM Router · 模型接入层</div>
-    <h2>C# Agent LLM Router：让大模型"可切换、可靠"</h2>
-    <div class="grid g2" style="align-items:center">
-      <div>
-        <p class="lead" style="margin-bottom:12px">独立的 ASP.NET Core 服务，作为<span class="hl">统一的大模型网关</span>，对接 Jan.ai 本地模型，供 Java / Python 侧调用。</p>
-        <ul class="feat ag">
-          <li>屏蔽底层模型差异，业务侧只调一个 <span class="mono">/api/agent/chat</span></li>
-          <li>运行时<span class="hl">热切换模型</span>，无需改代码、无需重启</li>
-          <li>OpenAI 兼容协议，未来可平滑接入云端模型</li>
-          <li>内置容错，让 LLM 调用从"能用"升级为"可靠"</li>
-        </ul>
-      </div>
-      <div class="codeblock"><span class="c1"># 统一入口，业务侧无感知</span>
-POST <span class="f">/api/agent/chat</span>
-{ <span class="s">"messages"</span>:[…],
-  <span class="s">"model"</span>:<span class="s">"minimax-m2.7"</span> }   <span class="c1"># 可选</span>
-
-<span class="c1"># 运行时切换默认模型</span>
-POST <span class="f">/api/agent/switch</span>?model=…
-<span class="c1"># 查询可用模型 / 健康检查</span>
-GET  <span class="f">/api/agent/models</span>   GET <span class="f">/health</span></div>
+    <div class="fighead">
+      <div class="kicker ag"><span class="dot"></span>LLM Router · 为什么需要它</div>
+      <div class="h grad-ag-text">模型 API 的管理切换：三大痛点</div>
     </div>
+    <div class="figstage"><img src="shots/1.png" alt="模型 API 管理切换 · Router 总览"></div>
+    <p class="figcap muted"><span class="hl">模型绑定</span> 换模型要重启服务　｜　<span class="hl">缺乏弹性</span> LLM 不可用无兜底　｜　<span class="hl">管理混乱</span> 多 API 难维护 —— 用独立的 C# LLM Router 统一接入与切换</p>
   </section>
 
-  <!-- 14 LLM Router 架构与切换（赵紫东） -->
-  <section class="slide">
+  <!-- 14 工具引入 · Jan.ai 是什么（赵紫东 · 图2） -->
+  <section class="slide figslide">
     <div class="who ag">讲解 · 赵紫东</div>
-    <div class="kicker ag"><span class="dot"></span>LLM Router · 架构与模型路由</div>
-    <h2>四大模块 + 四级切换优先级</h2>
-    <div class="grid g4" style="margin-bottom:16px">
-      <div class="card ag"><div class="ic">🧭</div><h3>LlmRouter</h3><p>模型选择与调用路由的调度中心</p></div>
-      <div class="card ag"><div class="ic">🔌</div><h3>JanLlmService</h3><p>OpenAI 兼容 HTTP 调用 Jan.ai</p></div>
-      <div class="card ag"><div class="ic">🛡️</div><h3>ResilienceHandler</h3><p>重试 + 熔断（Polly）</p></div>
-      <div class="card ag"><div class="ic">⚙️</div><h3>ConfigLoader</h3><p>config.yaml 热加载模型列表</p></div>
+    <div class="fighead">
+      <div class="kicker ag"><span class="dot"></span>工具引入 · Jan.ai</div>
+      <div class="h grad-ag-text">用 Jan.ai 统一纳管本地与云端模型</div>
     </div>
-    <h3 style="margin-bottom:10px">模型切换优先级（从高到低）</h3>
-    <div class="flow">
-      <div class="step"><span class="n">1</span><h3>请求体</h3><p>body 中的 <span class="mono">"model"</span></p></div>
-      <div class="chev">›</div>
-      <div class="step"><span class="n">2</span><h3>Header</h3><p><span class="mono">X-Model: xxx</span></p></div>
-      <div class="chev">›</div>
-      <div class="step"><span class="n">3</span><h3>Query</h3><p><span class="mono">?model=xxx</span></p></div>
-      <div class="chev">›</div>
-      <div class="step"><span class="n">4</span><h3>默认</h3><p>config.yaml 的 defaultModel</p></div>
-    </div>
+    <div class="figstage"><img src="shots/2.png" alt="Jan.ai 工具引入"></div>
+    <p class="figcap muted">Jan.ai 是开源的 ChatGPT 替代品：<span class="hl">本地开源模型</span>与<span class="hl">云端 API 模型</span>一处管理，并对外提供 OpenAI 兼容接口</p>
   </section>
 
-  <!-- 15 LLM Router 韧性（赵紫东） -->
-  <section class="slide">
+  <!-- 15 工具引入 · Jan.ai 桌面应用（赵紫东 · 图3） -->
+  <section class="slide figslide">
     <div class="who ag">讲解 · 赵紫东</div>
-    <div class="kicker ag"><span class="dot"></span>LLM Router · 韧性机制</div>
-    <h2>重试 + 熔断：故障不蔓延</h2>
-    <div class="grid g2">
-      <div class="card ag"><div class="ic">🔁</div><h3 style="font-size:18px;margin-bottom:8px">重试 · 指数退避</h3>
-        <ul class="feat ag"><li>针对 5xx / 429 / 连接失败等<span class="hl">临时故障</span></li><li>退避 1s → 2s → 4s，最多 3 次、上限 10s</li><li>瞬时抖动大概率一次重试即恢复</li></ul></div>
-      <div class="card ag"><div class="ic">⛔</div><h3 style="font-size:18px;margin-bottom:8px">熔断 · 状态机</h3>
-        <ul class="feat ag"><li>连续失败 5 次 → 打开熔断，<span class="hl">快速失败</span></li><li>休眠 30s 进入半开，试探性放行</li><li>成功则恢复，失败则继续熔断</li></ul></div>
+    <div class="fighead">
+      <div class="kicker ag"><span class="dot"></span>工具引入 · 桌面应用展示</div>
+      <div class="h grad-ag-text">本地 API Server + 多模型供应商</div>
     </div>
-    <p style="margin-top:18px;text-align:center" class="small">当 Jan.ai 过载时，Router 快速失败而非堆积请求——<span class="hl">既保护调用方，也保护模型后端</span>。还支持 API Key 认证、Request-ID 全链路追踪、RFC 7807 标准错误。</p>
+    <div class="figstage"><img src="shots/3.png" alt="Jan.ai 桌面应用展示"></div>
+    <p class="figcap muted">开启本地 API Server，可在 <span class="hl">Llama.cpp / OpenAI / Gemini / NVIDIA NIM …</span> 多家供应商间随时切换，一处配置、即开即用</p>
   </section>
 
-  <!-- 16 数据中心可视化（截图占位） -->
+  <!-- 16 工具引入 · Jan 内部时序（赵紫东 · 图4） -->
+  <section class="slide figslide">
+    <div class="who ag">讲解 · 赵紫东</div>
+    <div class="fighead">
+      <div class="kicker ag"><span class="dot"></span>工具引入 · 内部架构</div>
+      <div class="h grad-ag-text">EngineManager × ModelManager 加载时序</div>
+    </div>
+    <div class="figstage"><img src="shots/4.png" alt="Jan 内部加载时序图"></div>
+    <p class="figcap muted">应用启动后以<span class="hl">单例</span>方式加载各扩展，<span class="hl">注册引擎与模型</span>；全部就绪后才进入对外服务状态</p>
+  </section>
+
+  <!-- 17 工具应用 · Jan 在项目中的角色（赵紫东 · 图5） -->
+  <section class="slide figslide">
+    <div class="who ag">讲解 · 赵紫东</div>
+    <div class="fighead">
+      <div class="kicker ag"><span class="dot"></span>工具应用 · 项目落地</div>
+      <div class="h grad-ag-text">模型统一管理 + 协议统一出口</div>
+    </div>
+    <div class="figstage"><img src="shots/5.png" alt="Jan 在项目中的应用"></div>
+    <p class="figcap muted">本地 Llama 与远程 GPT <span class="hl">注册为统一模型 ID</span>；标准 OpenAI 请求经 Jan 路由到本地模型 / 远程 API —— 业务侧只面对一个出口</p>
+  </section>
+
+  <!-- 18 网关设计 · 四大模块（赵紫东 · 图6） -->
+  <section class="slide figslide">
+    <div class="who ag">讲解 · 赵紫东</div>
+    <div class="fighead">
+      <div class="kicker ag"><span class="dot"></span>网关设计 · 核心模块</div>
+      <div class="h grad-ag-text">Router 网关的四大模块</div>
+    </div>
+    <div class="figstage"><img src="shots/6.png" alt="LLM Router 网关四大模块设计"></div>
+    <p class="figcap muted"><span class="hl">APIMiddleware</span> 密钥认证 → <span class="hl">LlmRouter</span> 策略映射构建标准请求 → <span class="hl">ResilienceHandler</span> 响应与转发 → <span class="hl">Health / Models / Switch</span> 辅助端点</p>
+  </section>
+
+  <!-- 19 网关设计 · 熔断降级（赵紫东 · 图7） -->
+  <section class="slide figslide">
+    <div class="who ag">讲解 · 赵紫东</div>
+    <div class="fighead">
+      <div class="kicker ag"><span class="dot"></span>网关设计 · 弹性机制</div>
+      <div class="h grad-ag-text">熔断降级：调用抖动一次重试即恢复</div>
+    </div>
+    <div class="figstage"><img src="shots/7.png" alt="Jan 调用与熔断降级"></div>
+    <p class="figcap muted">相对弹性设计：超过阈值<span class="hl">自动降级、切换备用模型</span>；重试 + 熔断让瞬时抖动一次重试即恢复，后端过载时<span class="hl">快速失败、故障不蔓延</span></p>
+  </section>
+
+  <!-- 20 数据中心可视化（截图占位） -->
   <section class="slide">
     <div class="who">讲解 · 高俊</div>
     <div class="kicker"><span class="dot"></span>Live Demo · 商家数据中心</div>
@@ -467,7 +491,7 @@ GET  <span class="f">/api/agent/models</span>   GET <span class="f">/health</spa
     </div>
   </section>
 
-  <!-- 17 演示视频 -->
+  <!-- 21 演示视频 -->
   <section class="slide">
     <div class="who">讲解 · 高俊</div>
     <div class="kicker"><span class="dot"></span>Demo Videos · 录屏演示</div>
@@ -489,7 +513,7 @@ GET  <span class="f">/api/agent/models</span>   GET <span class="f">/health</spa
     <p class="small" style="text-align:center;margin-top:16px;color:var(--faint)">点击任一视频即可<span class="hl">放大播放</span>；按 <span class="mono">Esc</span> 或点击空白处 / 右上角 × 关闭。</p>
   </section>
 
-  <!-- 18 微服务关键设计要点 -->
+  <!-- 22 微服务关键设计要点 -->
   <section class="slide">
     <div class="kicker"><span class="dot"></span>Key Points · 关键设计要点</div>
     <h2>微服务架构下的四个关键设计</h2>
@@ -502,7 +526,7 @@ GET  <span class="f">/api/agent/models</span>   GET <span class="f">/health</spa
     <p style="margin-top:18px;text-align:center" class="small">微服务把复杂系统拆成<span class="hl">可独立演进的服务</span>，Agent 再以标准接口把它们<span class="agpill">智能地编排</span>起来——这正是本项目的核心设计思想。</p>
   </section>
 
-  <!-- 19 分工 -->
+  <!-- 23 分工 -->
   <section class="slide">
     <div class="kicker"><span class="dot"></span>Team · 分工</div>
     <h2>团队分工</h2>
@@ -515,7 +539,7 @@ GET  <span class="f">/api/agent/models</span>   GET <span class="f">/health</spa
     <p style="margin-top:24px;text-align:center" class="lead">四人协作，覆盖<span class="hl">网关 → 交易内核 → 异步 → Agent → 前端</span>完整链路。</p>
   </section>
 
-  <!-- 22 总结 -->
+  <!-- 24 总结 -->
   <section class="slide center">
     <div class="kicker ag"><span class="dot"></span>Summary · 总结与展望</div>
     <h2 style="font-size:clamp(26px,4.2vw,54px)">微服务负责<span class="grad-text">稳</span>，Agent 负责<span class="grad-ag-text">智</span></h2>
