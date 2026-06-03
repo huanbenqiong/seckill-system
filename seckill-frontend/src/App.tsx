@@ -4,6 +4,7 @@ import { GoodsList } from './pages/GoodsList';
 import { GoodsDetail } from './pages/GoodsDetail';
 import { MyOrders } from './pages/MyOrders';
 import { SellerDashboard } from './pages/SellerDashboard';
+import { Profile } from './pages/Profile';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/goods/:id" element={<GoodsDetail />} />
         <Route path="/orders" element={<MyOrders />} />
         <Route path="/seller" element={<SellerDashboard />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

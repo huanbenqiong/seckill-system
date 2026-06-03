@@ -19,7 +19,7 @@ public class SeckillGoods implements Serializable {
     /**
      * 秒杀活动ID
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -68,9 +68,24 @@ public class SeckillGoods implements Serializable {
     private Integer version;
 
     /**
-     * 状态: 0-已下线, 1-准备中, 2-进行中, 3-已结束
+     * 状态: 0-已下线, 1-准备中, 2-进行中, 3-已结束（由起止时间动态计算）
      */
     private Integer status;
+
+    /**
+     * 商品名称
+     */
+    private String name;
+
+    /**
+     * 商品分类（手机数码/家用电器/电脑办公/服装鞋帽/食品生鲜/美妆护肤/运动户外/家具家居）
+     */
+    private String category;
+
+    /**
+     * 商品图片URL
+     */
+    private String imageUrl;
 
     /**
      * 创建时间

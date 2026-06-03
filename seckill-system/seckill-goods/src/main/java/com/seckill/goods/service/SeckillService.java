@@ -1,35 +1,42 @@
 package com.seckill.goods.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.seckill.common.constant.MqConstants;
 import com.seckill.common.constant.RedisConstants;
 import com.seckill.common.exception.BusinessException;
+import com.seckill.common.mq.CreateOrderMessage;
 import com.seckill.common.result.ResultCode;
-import com.seckill.goods.entity.Order;
+import com.seckill.common.utils.SnowflakeIdGenerator;
 import com.seckill.goods.entity.SeckillGoods;
-import com.seckill.goods.mapper.OrderMapper;
 import com.seckill.goods.mapper.SeckillGoodsMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 
 /**
  * 秒杀服务 - 核心业务逻辑
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SeckillService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SeckillService.class);
+
     private final SeckillGoodsMapper seckillGoodsMapper;
-    private final OrderMapper orderMapper;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
+
+    /** RocketMQ 可选注入：未部署 MQ 时服务仍可启动，秒杀时才报错 */
+    @Autowired(required = false)
+    private RocketMQTemplate rocketMQTemplate;
+
+    private static final SnowflakeIdGenerator SNOWFLAKE = new SnowflakeIdGenerator(1, 1);
 
     private static final DefaultRedisScript<Long> STOCK_DECREASE_SCRIPT;
 
@@ -52,30 +59,136 @@ public class SeckillService {
     }
 
     /**
+     * 根据起止时间动态计算并更新状态
+     * 规则：0=已下线(不变), 1=准备中(未到开始时间), 2=进行中, 3=已结束(超过结束时间)
+     */
+    private void enrichStatus(SeckillGoods goods) {
+        if (goods.getStatus() != null && goods.getStatus() == 0) return; // 已下线，不重算
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime start = goods.getStartDate();
+        java.time.LocalDateTime end = goods.getEndDate();
+        if (start != null && end != null) {
+            if (now.isBefore(start))       goods.setStatus(1); // 准备中
+            else if (now.isAfter(end))     goods.setStatus(3); // 已结束
+            else                           goods.setStatus(2); // 进行中
+        }
+    }
+
+    /**
      * 获取秒杀商品列表（实时库存和已售）
      */
     public List<SeckillGoods> getGoodsList() {
         List<SeckillGoods> list = seckillGoodsMapper.selectList(null);
+        enrichRedisStock(list);
+        return list;
+    }
+
+    /**
+     * 分页查询秒杀商品列表（支持搜索/筛选/排序，实时库存）
+     */
+    public Map<String, Object> getGoodsListPaged(
+            String keyword,
+            String category,
+            Integer status,
+            int page,
+            int size,
+            String sortBy) {
+
+        LambdaQueryWrapper<SeckillGoods> wrapper = new LambdaQueryWrapper<>();
+
+        // 名称关键字模糊搜索
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            wrapper.like(SeckillGoods::getName, keyword.trim());
+        }
+
+        // 分类精确筛选
+        if (category != null && !category.trim().isEmpty()) {
+            wrapper.eq(SeckillGoods::getCategory, category.trim());
+        }
+
+        // 状态筛选（null 表示全部，不过滤）
+        if (status != null) {
+            wrapper.eq(SeckillGoods::getStatus, status);
+        }
+
+        // 排序
+        switch (sortBy != null ? sortBy : "default") {
+            case "price_asc":
+                wrapper.orderByAsc(SeckillGoods::getSeckillPrice);
+                break;
+            case "price_desc":
+                wrapper.orderByDesc(SeckillGoods::getSeckillPrice);
+                break;
+            case "stock_asc":
+                wrapper.orderByAsc(SeckillGoods::getStockCount);
+                break;
+            case "sold_desc":
+                wrapper.orderByDesc(SeckillGoods::getSoldCount);
+                break;
+            default:
+                wrapper.orderByDesc(SeckillGoods::getCreateTime);
+                break;
+        }
+
+        // 先查出所有符合条件的记录（避免分页时被 Redis 丰富打乱）
+        List<SeckillGoods> allFiltered = seckillGoodsMapper.selectList(wrapper);
+
+        // 补充 Redis 实时库存
+        enrichRedisStock(allFiltered);
+
+        // 内存中重新排序（因为 Redis 丰富后 sortKey 已无用，但可保持一致）
+        if ("price_asc".equals(sortBy)) {
+            allFiltered.sort(Comparator.comparing(SeckillGoods::getSeckillPrice));
+        } else if ("price_desc".equals(sortBy)) {
+            allFiltered.sort(Comparator.comparing(SeckillGoods::getSeckillPrice).reversed());
+        } else if ("stock_asc".equals(sortBy)) {
+            allFiltered.sort(Comparator.comparing((SeckillGoods g) -> g.getStockCount() != null ? g.getStockCount() : 0));
+        } else if ("sold_desc".equals(sortBy)) {
+            allFiltered.sort(Comparator.comparing((SeckillGoods g) -> g.getSoldCount() != null ? g.getSoldCount() : 0).reversed());
+        } else {
+            allFiltered.sort(Comparator.comparing(SeckillGoods::getCreateTime, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+        }
+
+        int total = allFiltered.size();
+        int totalPages = (int) Math.ceil((double) total / size);
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, total);
+
+        List<SeckillGoods> pageData = fromIndex < total
+                ? allFiltered.subList(fromIndex, toIndex)
+                : Collections.emptyList();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("records", pageData);
+        result.put("total", total);
+        result.put("pages", totalPages);
+        result.put("current", page);
+        result.put("size", size);
+        return result;
+    }
+
+    /**
+     * 批量从 Redis 补充实时库存和已售，并动态计算状态
+     */
+    private void enrichRedisStock(List<SeckillGoods> list) {
         for (SeckillGoods goods : list) {
             String stockKey = RedisConstants.SECKILL_STOCK + goods.getId();
             String soldKey = RedisConstants.SECKILL_SOLD + goods.getId();
 
-            // 实时库存
             Object stock = redisTemplate.opsForValue().get(stockKey);
             if (stock != null) {
                 goods.setStockCount(Integer.parseInt(stock.toString()));
             }
 
-            // 实时已售（从 Redis 读取，否则从 DB）
             Object sold = redisTemplate.opsForValue().get(soldKey);
             if (sold != null) {
                 goods.setSoldCount(Integer.parseInt(sold.toString()));
             } else if (goods.getSoldCount() != null && goods.getSoldCount() > 0) {
-                // DB 有已售但 Redis 没有，预热到 Redis
                 redisTemplate.opsForValue().set(soldKey, goods.getSoldCount());
             }
+
+            enrichStatus(goods);
         }
-        return list;
     }
 
     /**
@@ -86,33 +199,13 @@ public class SeckillService {
         if (goods == null) {
             throw new BusinessException("商品不存在");
         }
-
-        String stockKey = RedisConstants.SECKILL_STOCK + goodsId;
-        String soldKey = RedisConstants.SECKILL_SOLD + goodsId;
-
-        // 实时库存
-        Object stock = redisTemplate.opsForValue().get(stockKey);
-        if (stock != null) {
-            goods.setStockCount(Integer.parseInt(stock.toString()));
-        } else if (goods.getStockCount() != null && goods.getStockCount() > 0) {
-            redisTemplate.opsForValue().set(stockKey, goods.getStockCount());
-        }
-
-        // 实时已售
-        Object sold = redisTemplate.opsForValue().get(soldKey);
-        if (sold != null) {
-            goods.setSoldCount(Integer.parseInt(sold.toString()));
-        } else if (goods.getSoldCount() != null && goods.getSoldCount() > 0) {
-            redisTemplate.opsForValue().set(soldKey, goods.getSoldCount());
-        }
-
+        enrichRedisStock(Collections.singletonList(goods));
         return goods;
     }
 
     /**
      * 执行秒杀
      */
-    @Transactional(rollbackFor = Exception.class)
     public String doSeckill(Long userId, Long goodsId) {
         log.info("开始秒杀: userId={}, goodsId={}", userId, goodsId);
 
@@ -127,12 +220,19 @@ public class SeckillService {
         String soldKey = RedisConstants.SECKILL_SOLD + goodsId;
         ensureRedisInitialized(goodsId, goods, stockKey, soldKey);
 
-        // 3. 检查活动状态
-        if (goods.getStatus() != null && goods.getStatus() == 3) {
+        // 3. 检查活动状态（动态计算，基于起止时间）
+        enrichStatus(goods);
+        if (goods.getStatus() == null || goods.getStatus() == 0) {
+            throw new BusinessException("商品已下线");
+        }
+        if (goods.getStatus() == 1) {
+            throw new BusinessException("活动尚未开始，请耐心等待");
+        }
+        if (goods.getStatus() == 3) {
             throw new BusinessException(ResultCode.SECKILL_ENDED);
         }
 
-        // 4. 扣减库存
+        // 4. Redis Lua 原子扣减库存
         Long result = redisTemplate.execute(STOCK_DECREASE_SCRIPT, Collections.singletonList(stockKey));
         long remainingStock = result != null ? result : -2;
 
@@ -144,36 +244,30 @@ public class SeckillService {
         log.info("库存扣减成功: goodsId={}, remainingStock={}", goodsId, remainingStock);
 
         try {
-            // 6. 生成订单ID
+            // 5. 生成订单ID
             Long orderId = generateOrderId();
 
-            // 7. 创建订单
-            Order order = new Order();
-            order.setId(orderId);
-            order.setUserId(userId);
-            order.setSeckillId(goodsId);
-            order.setSeckillPrice(goods.getSeckillPrice());
-            order.setAmount(goods.getSeckillPrice());
-            order.setStatus(0);
+            // 6. 发送 MQ 消息，由订单服务异步完成订单入库
+            if (rocketMQTemplate == null) {
+                // 回滚库存
+                redisTemplate.opsForValue().increment(stockKey);
+                throw new BusinessException(ResultCode.ERROR, "消息队列服务未启动，请联系管理员");
+            }
+            CreateOrderMessage msg = new CreateOrderMessage(orderId, userId, goodsId, goods.getSeckillPrice());
+            String json = objectMapper.writeValueAsString(msg);
+            rocketMQTemplate.syncSend(
+                    MqConstants.SECKILL_ORDER_TOPIC + ":" + MqConstants.TAG_CREATE_ORDER, json);
+            log.info("发送创单消息成功: orderId={}", orderId);
 
-            orderMapper.insert(order);
-            log.info("订单创建成功: orderId={}", orderId);
-
-            // 8. 同步更新数据库库存和已售
-            updateGoodsStockAndSold(goodsId);
-
-            // 9. Redis 中增加已售数量
+            // 7. Redis 已售数量 +1（立即更新，供前端实时展示）
             redisTemplate.opsForValue().increment(soldKey);
-            log.info("Redis已售+1: goodsId={}", goodsId);
 
-            // 10. 标记用户已购买（允许多次购买，取消订单后可重新秒杀）
-            // markUserPurchased(userId, goodsId, goods);
-
+            // 允许同一用户多次购买，不作重复购买拦截
             log.info("秒杀成功: userId={}, goodsId={}, orderId={}", userId, goodsId, orderId);
             return String.valueOf(orderId);
 
         } catch (Exception e) {
-            // 回滚库存
+            // 回滚 Redis 库存
             redisTemplate.opsForValue().increment(stockKey);
             log.error("秒杀异常，回滚库存: userId={}, goodsId={}", userId, goodsId, e);
             throw new BusinessException(ResultCode.ERROR, "秒杀失败，请重试: " + e.getMessage());
@@ -198,13 +292,13 @@ public class SeckillService {
     }
 
     private Long generateOrderId() {
-        return System.currentTimeMillis();
+        return SNOWFLAKE.nextId();
     }
 
     /**
-     * 更新数据库库存和已售数量（原子操作）
+     * 更新数据库库存和已售数量（原子操作，供订单服务回调）
      */
-    private void updateGoodsStockAndSold(Long goodsId) {
+    public void updateGoodsStockAndSold(Long goodsId) {
         seckillGoodsMapper.updateStockAndSold(goodsId);
         log.info("数据库库存-1，已售+1: goodsId={}", goodsId);
     }

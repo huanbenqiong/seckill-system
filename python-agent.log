@@ -1,0 +1,150 @@
+==================================================
+  ÃëÉ±ÏµÍ³ AI ÉÌ¼ÒÖúÊÖ
+  Python Agent ·þÎñÆô¶¯ÖÐ...
+  ºó¶Ë½Ó¿ÚµØÖ·: http://localhost:8099
+  Java Êý¾ÝÔ´:   http://localhost:8090
+==================================================
+INFO:     127.0.0.1:52804 - "GET /health HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+
+[1m> Finished chain.[0m
+INFO:     127.0.0.1:55495 - "POST /chat HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+[32;1m[1;3m
+Invoking: `get_sales_rank` with `{'limit': 10}`
+responded: ÈÃÎÒÏÈ²éÒ»ÏÂÏúÊÛÅÅÐÐ°ñºÍËùÓÐÉÌÆ·ÐÅÏ¢£¬¿´¿´ÄÄ¿îÉÌÆ·ÂôµÃ×î¿ì¡£
+
+[0mINFO:     127.0.0.1:55828 - "POST /chat HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+[32;1m[1;3m
+Invoking: `get_sales_rank` with `{'limit': 10}`
+responded: ÎÒÏÈ²éÒ»ÏÂÏúÊÛÅÅÐÐ°ñ£¬¿´¿´ÄÄ¿îÉÌÆ·ÂôµÃ×îºÃ¡£
+
+[0m[33;1m[1;3m[][0m[32;1m[1;3m
+Invoking: `get_all_goods` with `{}`
+responded: ½ñÌìÔÝÊ±Ã»ÓÐÏúÊÛÅÅÐÐ°ñÊý¾Ý£¬ÄÇÎÒ»»¸ö½Ç¶È£¬ÏÈ¿´¿´ËùÓÐÉÌÆ·µÄÇé¿ö£¬ÔÙ½áºÏ¿â´æºÍÒÑÊÛÊý¾ÝÀ´ÅÐ¶ÏÄÄ¿îÉÌÆ·ÂôµÃ×î¿ì¡£
+
+[0m[38;5;200m[1;3m[][0m[32;1m[1;3m
+Invoking: `get_dashboard` with `{}`
+responded: ¿´ÆðÀ´Ä¿Ç°ÏµÍ³ÖÐ»¹Ã»ÓÐÉÌÆ·Êý¾Ý¡£ÈÃÎÒÔÙ²éÒ»ÏÂ½ñÈÕ´óÅÌ»ã×Ü£¬¿´¿´ÕûÌåÇé¿ö¡£
+
+[0m[38;5;200m[1;3m{'totalOrders': 0, 'paidOrders': 0, 'pendingOrders': 0, 'cancelledOrders': 0, 'totalSalesAmount': 0, 'activeGoodsCount': 0, 'lowStockGoodsCount': 0, 'hotGoodsNames': []}[0m[32;1m[1;3mÄ¿Ç°ÏµÍ³ÖÐ»¹Ã»ÓÐÉÌÆ·Êý¾Ý£¬´óÅÌ»ã×ÜÏÔÊ¾£º
+
+- **»îÔ¾ÉÌÆ·Êý£º0**
+- **×Ü¶©µ¥Á¿£º0**
+- **×ÜÏúÊÛ¶î£º0Ôª**
+
+ËùÒÔÔÝÊ±Ã»ÓÐÉÌÆ·ÔÚÊÛÂô£¬Ò²¾ÍÎÞ·¨ÅÐ¶ÏÄÄ¿îÉÌÆ·ÂôµÃ×î¿ì¡£½¨ÒéÄú¿ÉÒÔÏÈÉÏ¼ÜÒ»Ð©ÃëÉ±ÉÌÆ·£¬½ìÊ±ÎÒÔÙ°ïÄú·ÖÎöÏúÊÛÇé¿ö£¡[0m
+
+[1m> Finished chain.[0m
+INFO:     127.0.0.1:62380 - "POST /chat HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+[32;1m[1;3m
+Invoking: `get_sales_rank` with `{'limit': 10}`
+responded: ÎÒÀ´²éÒ»ÏÂÏúÊÛÅÅÐÐ°ñ£¬¿´¿´ÄÄ¿îÉÌÆ·ÂôµÃ×î¿ì¡£
+
+[0m[33;1m[1;3m[{'goodsId': 300002, 'goodsName': 'ÉÌÆ·ID=300002', 'soldCount': 1, 'seckillPrice': 8999.0, 'totalSales': 8999.0}][0m[32;1m[1;3m
+Invoking: `get_all_goods` with `{}`
+responded: Ä¿Ç°ÏúÊÛÅÅÐÐ°ñÖÐÖ»ÓÐÒ»ÌõÊý¾Ý¡£ÈÃÎÒÔÙ²éÒ»ÏÂËùÓÐÉÌÆ·µÄÏêÏ¸ÐÅÏ¢£¬°üÀ¨¿â´æºÍÒÑÊÛÊýÁ¿£¬À´¸üÈ«ÃæµØ·ÖÎöÄÄ¿îÉÌÆ·ÂôµÃ×î¿ì¡£
+
+[0m[38;5;200m[1;3m[{'id': 300001, 'seckillPrice': 5999.0, 'stockCount': 99, 'soldCount': 0, 'status': 2, 'startDate': '2026-05-22T21:54:09', 'endDate': '2026-05-29T21:54:09', 'createTime': '2026-05-22T21:54:09', 'updateTime': '2026-05-22T21:54:09', 'goodsName': None, 'category': None}, {'id': 300002, 'seckillPrice': 8999.0, 'stockCount': 48, 'soldCount': 1, 'status': 2, 'startDate': '2026-05-22T21:54:09', 'endDate': '2026-05-29T21:54:09', 'createTime': '2026-05-22T21:54:09', 'updateTime': '2026-05-28T13:44:35', 'goodsName': None, 'category': None}, {'id': 300003, 'seckillPrice': 5499.0, 'stockCount': 199, 'soldCount': 0, 'status': 1, 'startDate': '2026-05-23T21:54:09', 'endDate': '2026-05-30T21:54:09', 'createTime': '2026-05-22T21:54:09', 'updateTime': '2026-05-22T21:54:09', 'goodsName': None, 'category': None}][0m[32;1m[1;3m
+Invoking: `get_goods_stats` with `{'goods_id': 300001}`
+responded: ÈÃÎÒÔÙ¿´¿´Ã¿¸öÉÌÆ·µÄÏêÏ¸Í³¼ÆÊý¾Ý£¬°üÀ¨ÊÛóÀËÙ¶ÈºÍ×ª»¯ÂÊµÈÖ¸±ê¡£
+
+[0m[36;1m[1;3m{'goodsId': 300001, 'goodsName': 'ÉÌÆ·ID=300001', 'stockCount': 99, 'soldCount': 0, 'seckillPrice': 5999.0, 'activityDurationMinutes': 10080, 'sellOutSpeed': 'Î´¿ªÊ¼', 'conversionRate': 0.0}[0m[32;1m[1;3m
+Invoking: `get_goods_stats` with `{'goods_id': 300002}`
+responded: ÈÃÎÒÔÙ¿´¿´Ã¿¸öÉÌÆ·µÄÏêÏ¸Í³¼ÆÊý¾Ý£¬°üÀ¨ÊÛóÀËÙ¶ÈºÍ×ª»¯ÂÊµÈÖ¸±ê¡£
+
+[0m[36;1m[1;3m{'goodsId': 300002, 'goodsName': 'ÉÌÆ·ID=300002', 'stockCount': 48, 'soldCount': 1, 'seckillPrice': 8999.0, 'activityDurationMinutes': 10080, 'sellOutSpeed': 'ÒÑÊÛ2.0%', 'conversionRate': 2.04}[0m[32;1m[1;3m
+Invoking: `get_goods_stats` with `{'goods_id': 300003}`
+responded: ÈÃÎÒÔÙ¿´¿´Ã¿¸öÉÌÆ·µÄÏêÏ¸Í³¼ÆÊý¾Ý£¬°üÀ¨ÊÛóÀËÙ¶ÈºÍ×ª»¯ÂÊµÈÖ¸±ê¡£
+
+[0m[36;1m[1;3m{'goodsId': 300003, 'goodsName': 'ÉÌÆ·ID=300003', 'stockCount': 199, 'soldCount': 0, 'seckillPrice': 5499.0, 'activityDurationMinutes': 10080, 'sellOutSpeed': 'Î´¿ªÊ¼', 'conversionRate': 0.0}[0m
+[1m> Finished chain.[0m
+INFO:     127.0.0.1:51940 - "POST /chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51071 - "OPTIONS /chat HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+[32;1m[1;3m
+Invoking: `get_low_stock_goods` with `{'threshold': 10}`
+responded: ºÃµÄ£¬ÎÒÀ´²éÑ¯¿â´æµÍÓÚ10µÄÉÌÆ·ÁÐ±í¡£
+
+[0m[33;1m[1;3m[][0m[32;1m[1;3mºÃÏûÏ¢£¡Ä¿Ç°ÏµÍ³ÖÐ**Ã»ÓÐ¿â´æµÍÓÚ10¼þµÄÉÌÆ·**£¬ËùÓÐÉÌÆ·µÄ¿â´æ¶¼ÔÚ°²È«ÏßÒÔÉÏ£¬ÔÝÊ±²»ÐèÒª²¹»õ¡£
+
+Èç¹ûÄúÏëÁË½âÆäËû¿â´æãÐÖµµÄÇé¿ö£¬»òÕßÐèÒª²é¿´½ñÈÕÃëÉ±´óÅÌÊý¾Ý¡¢ÏúÊÛÅÅÐÐ°ñµÈÐÅÏ¢£¬ËæÊ±¸æËßÎÒ£¡[0m
+
+[1m> Finished chain.[0m
+INFO:     127.0.0.1:61393 - "POST /chat HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+[32;1m[1;3m
+Invoking: `get_dashboard` with `{}`
+responded: ºÃµÄ£¬ÎÒÀ´²é¿´½ñÈÕÃëÉ±´óÅÌÊý¾Ý£¡
+
+[0m[38;5;200m[1;3m{'totalOrders': 1, 'paidOrders': 0, 'pendingOrders': 1, 'cancelledOrders': 0, 'totalSalesAmount': 8999.0, 'activeGoodsCount': 1, 'lowStockGoodsCount': 0, 'hotGoodsNames': ['ÉÌÆ·ID=300002(ÒÑÊÛ1)']}[0m
+[1m> Finished chain.[0m
+INFO:     127.0.0.1:60263 - "POST /chat HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+[32;1m[1;3m±§Ç¸£¬ÎÒÄ¿Ç°Ã»ÓÐ"·¢²¼ÃëÉ±ÉÌÆ·"µÄ¹¤¾ß¡£ÎÒÏÖÓÐµÄ¹¦ÄÜÖ÷ÒªÊÇ¶Ô**ÒÑÓÐÉÌÆ·**½øÐÐ²éÑ¯¡¢¿â´æ¹ÜÀí¡¢»î¶¯ÑÓÆÚµÈ²Ù×÷£¬ÎÞ·¨´´½¨ÐÂµÄÉÌÆ·»òÉèÖÃÐÂµÄÃëÉ±»î¶¯¡£
+
+²»¹ý£¬ÎÒ¿ÉÒÔ°ïÄú×öÒÔÏÂÏà¹Ø²Ù×÷£º
+
+1. **²é¿´ËùÓÐÉÌÆ·ÁÐ±í** ¡ª ¿´¿´ÏÖÓÐÉÌÆ·ÖÐÊÇ·ñÓÐÊÊºÏÉèÖÃÃëÉ±µÄ
+2. **²éÑ¯ÉÌÆ·¿â´æ** ¡ª ²é¿´ÏÖÓÐÉÌÆ·µÄ¿â´æÇé¿ö
+3. **²¹»õ²Ù×÷** ¡ª ÎªÒÑÓÐÉÌÆ·×·¼Ó¿â´æ
+4. **ÑÓÆÚ»î¶¯Ê±¼ä** ¡ª ÑÓ³¤ÒÑÓÐÃëÉ±ÉÌÆ·µÄ»î¶¯Ê±¼ä
+
+ÐèÒªÎÒ°ïÄúÏÈ²é¿´Ò»ÏÂÏÖÓÐµÄÉÌÆ·ÁÐ±íÂð£¿[0m
+
+[1m> Finished chain.[0m
+INFO:     127.0.0.1:58437 - "POST /chat HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+[32;1m[1;3m
+Invoking: `batch_restock` with `{'threshold': 10, 'target_stock': 50}`
+responded: ºÃµÄ£¬ÎÒÀ´Ö´ÐÐÅúÁ¿²¹»õ²Ù×÷¡£
+
+[0m[36;1m[1;3m{'results': ['µ±Ç°Ã»ÓÐ¿â´æµÍÓÚ10µÄÉÌÆ·£¬ÎÞÐè²¹»õ'], 'total': 1}[0m
+[1m> Finished chain.[0m
+INFO:     127.0.0.1:51017 - "POST /chat HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+[32;1m[1;3m
+Invoking: `get_low_stock_goods` with `{'threshold': 100}`
+responded: ºÃµÄ£¬ÎÒÏÈ²éÑ¯Ò»ÏÂ¿â´æµÍÓÚ100µÄÉÌÆ·ÓÐÄÄÐ©¡£
+
+[0m[33;1m[1;3m[{'id': 300001, 'seckillPrice': 5999.0, 'stockCount': 99, 'soldCount': 0, 'status': 2, 'startDate': '2026-05-22T21:54:09', 'endDate': '2026-05-29T21:54:09', 'createTime': '2026-05-22T21:54:09', 'updateTime': '2026-05-22T21:54:09', 'goodsName': None, 'category': None}, {'id': 300002, 'seckillPrice': 8999.0, 'stockCount': 48, 'soldCount': 1, 'status': 2, 'startDate': '2026-05-22T21:54:09', 'endDate': '2026-05-29T21:54:09', 'createTime': '2026-05-22T21:54:09', 'updateTime': '2026-05-28T13:44:35', 'goodsName': None, 'category': None}][0m[32;1m[1;3m
+Invoking: `batch_restock` with `{'threshold': 100, 'target_stock': 500}`
+responded: ÕÒµ½ÁË2¸ö¿â´æµÍÓÚ100µÄÉÌÆ·£¬ÏÖÔÚ½øÐÐÅúÁ¿²¹»õ£¬½«ËüÃÇ¶¼²¹µ½500¼þ¡£
+
+[0m[36;1m[1;3m{'results': ['ÉÌÆ·ID=300001£¬´Ó 99 ²¹ÖÁ 500', 'ÉÌÆ·ID=300002£¬´Ó 48 ²¹ÖÁ 500'], 'total': 2}[0m
+[1m> Finished chain.[0m
+INFO:     127.0.0.1:51985 - "POST /chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50060 - "OPTIONS /chat HTTP/1.1" 200 OK
+
+
+[1m> Entering new AgentExecutor chain...[0m
+[32;1m[1;3m
+Invoking: `get_low_stock_goods` with `{'threshold': 10}`
+responded: ºÃµÄ£¬ÎÒÀ´²éÑ¯¿â´æµÍÓÚ10µÄÉÌÆ·¡£
+
+[0m[33;1m[1;3m[][0m[32;1m[1;3mºÃÏûÏ¢£¡Ä¿Ç°ÏµÍ³ÖÐ**Ã»ÓÐ¿â´æµÍÓÚ10¼þµÄÉÌÆ·**£¬ËùÓÐÉÌÆ·µÄ¿â´æ¶¼±£³ÖÔÚ10¼þ»òÒÔÉÏ£¬ÔÝÊ±²»ÐèÒª½ô¼±²¹»õ¡£
+
+Èç¹ûÄúÏë²é¿´¾ßÌåµÄ¿â´æÇé¿ö£¬ÎÒ¿ÉÒÔ½øÒ»²½²éÑ¯ËùÓÐÉÌÆ·µÄ¿â´æÁÐ±í£¬»òÕßÄúÒ²¿ÉÒÔ¸æËßÎÒÄú¹ØÐÄµÄÉÌÆ·ID£¬ÎÒÀ´ÖðÒ»²éÑ¯¡£ÓÐÊ²Ã´ÆäËûÐèÒª°ïÃ¦µÄÂð£¿[0m
+
+[1m> Finished chain.[0m
+INFO:     127.0.0.1:61457 - "POST /chat HTTP/1.1" 200 OK

@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import request from '../utils/request';
+import { AIChatWidget } from '../components/AIChatWidget';
+import { Navbar } from '../components/Navbar';
 
 interface Stats {
   totalProducts: number;
@@ -21,6 +23,7 @@ interface Product {
   startDate: string;
   endDate: string;
   status: number;
+  imageUrl?: string;
 }
 
 interface Order {
@@ -39,82 +42,148 @@ interface ProductForm {
   stockCount: string;
   startDate: string;
   endDate: string;
+  imageUrl: string;
 }
 
+interface EditForm {
+  id: number;
+  seckillPrice: string;
+  stockCount: number;
+  stockChange: string;
+  startDate: string;
+  endDate: string;
+  imageUrl: string;
+}
+
+// ---- Image Upload sub-component (defined at module level to avoid remounting) ----
+interface ImageUploadProps {
+  imageUrl: string;
+  uploading: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClear: () => void;
+}
+
+const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, uploading, fileInputRef, onSelect, onClear }) => (
+  <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+    {/* Preview */}
+    <div style={{
+      width: 96, height: 96, borderRadius: 8,
+      border: '2px dashed var(--border-color)',
+      overflow: 'hidden', flexShrink: 0,
+      background: 'var(--bg-page)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {imageUrl ? (
+        <img src={imageUrl} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
+          <div style={{ fontSize: 24, marginBottom: 2 }}>🖼️</div>
+          <div>暂无图片</div>
+        </div>
+      )}
+    </div>
+
+    {/* Controls */}
+    <div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={onSelect}
+      />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+        <button
+          type="button"
+          className="btn btn-outline btn-sm"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? (
+            <><span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid var(--border-color)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.75s linear infinite' }} /> 上传中…</>
+          ) : '📷 选择图片'}
+        </button>
+        {imageUrl && (
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            style={{ color: 'var(--color-accent)', borderColor: 'rgba(255,77,79,0.3)' }}
+            onClick={onClear}
+          >
+            删除
+          </button>
+        )}
+      </div>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
+        支持 JPG / PNG / GIF / WebP<br />最大 5 MB
+      </p>
+    </div>
+  </div>
+);
+
+// ---- Main component ----
 export const SellerDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState<Stats | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastRefresh, setLastRefresh] = useState(new Date());
   const navigate = useNavigate();
 
+  // Add product form
   const [showAddForm, setShowAddForm] = useState(false);
   const [productForm, setProductForm] = useState<ProductForm>({
-    seckillPrice: '',
-    stockCount: '',
-    startDate: '',
-    endDate: ''
+    seckillPrice: '', stockCount: '', startDate: '', endDate: '', imageUrl: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const addFileRef = useRef<HTMLInputElement>(null);
+
+  // Edit product modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [editImageUploading, setEditImageUploading] = useState(false);
+  const editFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const role = localStorage.getItem('role');
-    
-    if (!userId) {
-      alert('请先登录');
-      navigate('/');
-      return;
-    }
-    
-    if (role !== '1') {
-      alert('您不是商家，请使用商家账号登录');
-      navigate('/');
-      return;
-    }
-
+    if (!userId) { navigate('/'); return; }
+    if (role !== '1') { navigate('/goods'); return; }
     fetchData();
   }, [navigate]);
 
-  // 定时刷新数据（每3秒）
+  // Polling every 3 s
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchDataSilent();
-    }, 3000);
-    return () => clearInterval(interval);
+    const t = setInterval(fetchDataSilent, 3000);
+    return () => clearInterval(t);
   }, []);
 
   const fetchDataSilent = async () => {
     try {
-      const [statsRes, productsRes, ordersRes] = await Promise.all([
+      const [s, p, o] = await Promise.all([
         request.get('/seller/dashboard'),
         request.get('/seller/products'),
-        request.get('/seller/orders')
-      ]);
-
-      if (statsRes.code === 200) setStats(statsRes.data);
-      if (productsRes.code === 200) setProducts(productsRes.data);
-      if (ordersRes.code === 200) setOrders(ordersRes.data);
-    } catch (err) {
-      // 静默失败，不显示错误
-    }
+        request.get('/seller/orders'),
+      ]) as any[];
+      if (s.code === 200) setStats(s.data);
+      if (p.code === 200) setProducts(p.data);
+      if (o.code === 200) setOrders(o.data);
+    } catch { /* silent */ }
   };
 
   const fetchData = async () => {
     setLoading(true);
-    setLastRefresh(new Date());
     try {
-      const [statsRes, productsRes, ordersRes] = await Promise.all([
+      const [s, p, o] = await Promise.all([
         request.get('/seller/dashboard'),
         request.get('/seller/products'),
-        request.get('/seller/orders')
-      ]);
-
-      if (statsRes.code === 200) setStats(statsRes.data);
-      if (productsRes.code === 200) setProducts(productsRes.data);
-      if (ordersRes.code === 200) setOrders(ordersRes.data);
+        request.get('/seller/orders'),
+      ]) as any[];
+      if (s.code === 200) setStats(s.data);
+      if (p.code === 200) setProducts(p.data);
+      if (o.code === 200) setOrders(o.data);
     } catch (err) {
       console.error('获取数据失败', err);
     } finally {
@@ -122,25 +191,58 @@ export const SellerDashboard: React.FC = () => {
     }
   };
 
+  // ---- Image upload handler ----
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    target: 'add' | 'edit',
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const setUploading = target === 'add' ? setImageUploading : setEditImageUploading;
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res: any = await request.post('/seller/upload', formData);
+      if (res?.code === 200) {
+        if (target === 'add') {
+          setProductForm(p => ({ ...p, imageUrl: res.data }));
+        } else {
+          setEditForm(p => p ? { ...p, imageUrl: res.data } : p);
+        }
+      } else {
+        alert(res?.message || '上传失败');
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || '图片上传失败，请重试');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  // ---- CRUD handlers ----
   const handlePublishProduct = async () => {
     if (!productForm.seckillPrice || !productForm.stockCount) {
-      alert('请填写价格和库存');
+      alert('请填写秒杀价格和库存数量');
       return;
     }
-
     setSubmitting(true);
     try {
       const res: any = await request.post('/seller/products', {
         seckillPrice: parseFloat(productForm.seckillPrice),
         stockCount: parseInt(productForm.stockCount),
         startDate: productForm.startDate || new Date().toISOString(),
-        endDate: productForm.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        endDate: productForm.endDate || new Date(Date.now() + 7 * 86400000).toISOString(),
+        imageUrl: productForm.imageUrl || null,
       });
-
       if (res.code === 200) {
-        alert(`商品发布成功！商品ID: ${res.data.seckillId}`);
+        alert(`🎉 商品发布成功！ID: ${res.data?.seckillId || res.data?.id || ''}`);
         setShowAddForm(false);
-        setProductForm({ seckillPrice: '', stockCount: '', startDate: '', endDate: '' });
+        setProductForm({ seckillPrice: '', stockCount: '', startDate: '', endDate: '', imageUrl: '' });
         fetchData();
       } else {
         alert(res.message || '发布失败');
@@ -152,482 +254,466 @@ export const SellerDashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteProduct = async (id: number) => {
-    if (!confirm('确定要删除该商品吗？')) return;
+  const handleEditClick = (product: Product) => {
+    setEditForm({
+      id: product.id,
+      seckillPrice: String(product.seckillPrice),
+      stockCount: product.stockCount,
+      stockChange: '',
+      startDate: product.startDate ? product.startDate.slice(0, 16) : '',
+      endDate: product.endDate ? product.endDate.slice(0, 16) : '',
+      imageUrl: product.imageUrl || '',
+    });
+    setShowEditModal(true);
+  };
 
+  const handleEditSubmit = async () => {
+    if (!editForm?.seckillPrice) { alert('请填写秒杀价格'); return; }
+    setSubmitting(true);
+    try {
+      const data: any = {
+        seckillPrice: parseFloat(editForm.seckillPrice),
+        imageUrl: editForm.imageUrl || null,
+      };
+      if (editForm.startDate) data.startDate = new Date(editForm.startDate).toISOString();
+      if (editForm.endDate)   data.endDate   = new Date(editForm.endDate).toISOString();
+      if (editForm.stockChange !== '') data.stockChange = parseInt(editForm.stockChange);
+
+      const res: any = await request.put(`/seller/products/${editForm.id}`, data);
+      if (res.code === 200) {
+        setShowEditModal(false);
+        setEditForm(null);
+        fetchData();
+      } else {
+        alert(res.message || '更新失败');
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || '更新失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteProduct = async (id: number) => {
+    if (!confirm('确定要删除该商品吗？删除后无法恢复。')) return;
     try {
       const res: any = await request.delete(`/seller/products/${id}`);
-      if (res.code === 200) {
-        alert('删除成功');
-        fetchData();
-      }
-    } catch (err) {
-      console.error('删除失败', err);
-    }
+      if (res.code === 200) fetchData();
+    } catch { /* ignore */ }
   };
 
-  const getStatusText = (status: number) => {
-    switch (status) {
-      case 0: return '已下线';
-      case 1: return '准备中';
-      case 2: return '进行中';
-      case 3: return '已结束';
-      default: return '未知';
-    }
-  };
+  // ---- Helpers ----
+  const getStatusText = (s: number) => ({ 0: '已下线', 1: '准备中', 2: '进行中', 3: '已结束' }[s] ?? '未知');
+  const getStatusClass = (s: number) => ({ 0: 'badge-offline', 1: 'badge-preparing', 2: 'badge-active', 3: 'badge-ended' }[s] ?? 'badge-offline');
+  const getOrderStatusText = (s: number) => ({ 0: '待支付', 1: '已支付', 2: '已取消', 3: '已超时' }[s] ?? '未知');
+  const getOrderStatusClass = (s: number) => ({ 0: 'badge-pending', 1: 'badge-paid', 2: 'badge-cancelled', 3: 'badge-cancelled' }[s] ?? '');
+  const formatDate = (d: string | null) => d ? new Date(d).toLocaleString('zh-CN') : '-';
 
-  const getStatusClass = (status: number) => {
-    switch (status) {
-      case 0: return 'status-offline';
-      case 1: return 'status-preparing';
-      case 2: return 'status-active';
-      case 3: return 'status-ended';
-      default: return '';
-    }
-  };
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="loading-page"><div className="spinner" /><span>加载中…</span></div>
+      </>
+    );
+  }
 
-  const getOrderStatusText = (status: number) => {
-    switch (status) {
-      case 0: return '待支付';
-      case 1: return '已支付';
-      case 2: return '已取消';
-      case 3: return '已超时';
-      default: return '未知';
-    }
-  };
-
-  const getOrderStatusClass = (status: number) => {
-    switch (status) {
-      case 0: return 'status-pending';
-      case 1: return 'status-paid';
-      case 2: return 'status-cancelled';
-      default: return '';
-    }
-  };
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleString('zh-CN');
-  };
-
-  if (loading) return <div className="container"><div className="loading">加载中...</div></div>;
+  const shopName = localStorage.getItem('shopName');
 
   return (
-    <div className="container">
-      <header className="seller-header">
-        <h2>🏪 商家管理中心</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '12px', opacity: 0.8 }}>每3秒自动刷新</span>
-          <button className="btn btn-outline" style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }} onClick={fetchData}>🔄 刷新</button>
-          <button className="btn btn-outline" onClick={() => { localStorage.clear(); navigate('/'); }}>退出登录</button>
-        </div>
-      </header>
+    <div style={{ paddingBottom: 60 }}>
+      <Navbar />
 
-      <div className="seller-tabs">
-        <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>📊 数据中心</button>
-        <button className={activeTab === 'products' ? 'active' : ''} onClick={() => setActiveTab('products')}>📦 商品管理</button>
-        <button className={activeTab === 'orders' ? 'active' : ''} onClick={() => setActiveTab('orders')}>📋 订单管理</button>
+      {/* Hero bar */}
+      <div style={{ background: 'var(--gradient-primary)', color: 'white', padding: '22px 20px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>🏪 商家管理中心</h2>
+            {shopName && <p style={{ margin: '3px 0 0', opacity: 0.82, fontSize: 13 }}>{shopName}</p>}
+          </div>
+          <button
+            onClick={fetchData}
+            style={{
+              background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)',
+              color: 'white', borderRadius: 'var(--border-radius-full)', padding: '7px 16px',
+              cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            🔄 刷新
+          </button>
+        </div>
       </div>
 
-      {/* 数据中心 */}
-      {activeTab === 'dashboard' && stats && (
-        <div>
-          <h3 style={{ marginBottom: '16px' }}>经营概览</h3>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon">📦</div>
-              <div className="stat-content">
-                <div className="stat-value">{stats.totalProducts}</div>
-                <div className="stat-label">商品总数</div>
-              </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon">📈</div>
-              <div className="stat-content">
-                <div className="stat-value">{stats.totalSold}</div>
-                <div className="stat-label">已售数量</div>
-              </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon">🛒</div>
-              <div className="stat-content">
-                <div className="stat-value">{stats.totalOrders}</div>
-                <div className="stat-label">订单总数</div>
-              </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon">⏳</div>
-              <div className="stat-content">
-                <div className="stat-value">{stats.pendingOrders}</div>
-                <div className="stat-label">待支付</div>
-              </div>
-            </div>
-            <div className="stat-card highlight">
-              <div className="stat-icon">💰</div>
-              <div className="stat-content">
-                <div className="stat-value">¥{stats.totalSales}</div>
-                <div className="stat-label">销售额</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px' }}>
 
-      {/* 商品管理 */}
-      {activeTab === 'products' && (
-        <div>
-          <div className="section-header">
-            <h3>商品列表</h3>
-            <button className="btn btn-primary" onClick={() => setShowAddForm(!showAddForm)}>
-              {showAddForm ? '取消发布' : '+ 发布秒杀商品'}
+        {/* Tab bar */}
+        <div style={{
+          display: 'flex', gap: 6, marginBottom: 24,
+          background: 'white', padding: 8, borderRadius: 'var(--border-radius)', boxShadow: 'var(--shadow)',
+        }}>
+          {[
+            { key: 'dashboard', icon: '📊', label: '数据中心' },
+            { key: 'products',  icon: '📦', label: '商品管理' },
+            { key: 'orders',    icon: '📋', label: '订单管理' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                flex: 1, padding: '11px 16px', border: 'none', borderRadius: 'var(--border-radius-sm)',
+                cursor: 'pointer', fontSize: 14, fontWeight: 500, transition: 'var(--transition)',
+                background: activeTab === tab.key ? 'var(--gradient-primary)' : 'transparent',
+                color: activeTab === tab.key ? 'white' : 'var(--text-secondary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              {tab.icon} {tab.label}
             </button>
-          </div>
+          ))}
+        </div>
 
-          {showAddForm && (
-            <div className="publish-form card">
-              <h4>发布秒杀商品</h4>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>秒杀价格 (元) <span className="required">*</span></label>
-                  <input
-                    type="number"
-                    value={productForm.seckillPrice}
-                    onChange={(e) => setProductForm({ ...productForm, seckillPrice: e.target.value })}
-                    placeholder="请输入商品价格"
-                    step="0.01"
-                    min="0"
-                  />
+        {/* ========== Dashboard ========== */}
+        {activeTab === 'dashboard' && stats && (
+          <div>
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>经营概览</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 16 }}>
+              {[
+                { icon: '📦', value: stats.totalProducts, label: '商品总数',  accent: 'var(--color-primary)' },
+                { icon: '📈', value: stats.totalSold,     label: '已售数量',  accent: 'var(--color-success)' },
+                { icon: '🛒', value: stats.totalOrders,   label: '订单总数',  accent: 'var(--color-warning)' },
+                { icon: '⏳', value: stats.pendingOrders, label: '待支付',    accent: 'var(--color-accent)' },
+                { icon: '✅', value: stats.paidOrders,    label: '已支付',    accent: 'var(--color-success)' },
+              ].map((item, i) => (
+                <div key={i} className="card" style={{ padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ fontSize: 38 }}>{item.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 26, fontWeight: 700, color: item.accent, lineHeight: 1 }}>{item.value}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>{item.label}</div>
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>库存数量 <span className="required">*</span></label>
-                  <input
-                    type="number"
-                    value={productForm.stockCount}
-                    onChange={(e) => setProductForm({ ...productForm, stockCount: e.target.value })}
-                    placeholder="请输入库存数量"
-                    min="1"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>活动开始时间</label>
-                  <input
-                    type="datetime-local"
-                    value={productForm.startDate}
-                    onChange={(e) => setProductForm({ ...productForm, startDate: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>活动结束时间</label>
-                  <input
-                    type="datetime-local"
-                    value={productForm.endDate}
-                    onChange={(e) => setProductForm({ ...productForm, endDate: e.target.value })}
-                  />
+              ))}
+              {/* Sales highlight */}
+              <div className="card" style={{
+                padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 14,
+                background: 'var(--gradient-primary)', color: 'white',
+              }}>
+                <div style={{ fontSize: 38 }}>💰</div>
+                <div>
+                  <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1 }}>¥{stats.totalSales}</div>
+                  <div style={{ fontSize: 13, opacity: 0.82, marginTop: 4 }}>累计销售额</div>
                 </div>
               </div>
-              <div className="form-actions">
-                <button className="btn btn-primary" onClick={handlePublishProduct} disabled={submitting}>
-                  {submitting ? '发布中...' : '确认发布'}
-                </button>
-                <button className="btn btn-outline" onClick={() => setShowAddForm(false)}>取消</button>
-              </div>
-              <p className="form-tip">发布后商品将立即显示在买家的秒杀列表中</p>
             </div>
-          )}
 
-          <div className="table-container">
-            {products.length === 0 ? (
-              <div className="empty-state">
-                <p>暂无商品</p>
-                <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>发布第一件商品</button>
+            <div style={{
+              marginTop: 16, padding: '12px 16px',
+              background: 'rgba(102,126,234,0.06)', borderRadius: 'var(--border-radius)',
+              fontSize: 13, color: 'var(--text-muted)',
+            }}>
+              💡 数据每 3 秒自动刷新，确保信息实时准确
+            </div>
+          </div>
+        )}
+
+        {/* ========== Products ========== */}
+        {activeTab === 'products' && (
+          <div>
+            <div className="section-header">
+              <h3>商品列表</h3>
+              <button className="btn btn-primary" onClick={() => setShowAddForm(v => !v)}>
+                {showAddForm ? '收起' : '+ 发布商品'}
+              </button>
+            </div>
+
+            {/* Add form */}
+            {showAddForm && (
+              <div className="card" style={{ padding: 24, marginBottom: 20, border: '2px dashed var(--border-color)' }}>
+                <h4 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 600 }}>🚀 发布秒杀商品</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">秒杀价格（元）<span className="required">*</span></label>
+                    <input
+                      className="form-input"
+                      type="number"
+                      value={productForm.seckillPrice}
+                      onChange={e => setProductForm(p => ({ ...p, seckillPrice: e.target.value }))}
+                      placeholder="如：9.9"
+                      step="0.01" min="0"
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">库存数量<span className="required">*</span></label>
+                    <input
+                      className="form-input"
+                      type="number"
+                      value={productForm.stockCount}
+                      onChange={e => setProductForm(p => ({ ...p, stockCount: e.target.value }))}
+                      placeholder="如：100"
+                      min="1"
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">活动开始时间</label>
+                    <input
+                      className="form-input"
+                      type="datetime-local"
+                      value={productForm.startDate}
+                      onChange={e => setProductForm(p => ({ ...p, startDate: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">活动结束时间</label>
+                    <input
+                      className="form-input"
+                      type="datetime-local"
+                      value={productForm.endDate}
+                      onChange={e => setProductForm(p => ({ ...p, endDate: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0, gridColumn: '1 / -1' }}>
+                    <label className="form-label">商品图片</label>
+                    <ImageUpload
+                      imageUrl={productForm.imageUrl}
+                      uploading={imageUploading}
+                      fileInputRef={addFileRef}
+                      onSelect={e => handleImageUpload(e, 'add')}
+                      onClear={() => setProductForm(p => ({ ...p, imageUrl: '' }))}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                  <button className="btn btn-primary" onClick={handlePublishProduct} disabled={submitting}>
+                    {submitting ? '发布中…' : '确认发布'}
+                  </button>
+                  <button className="btn btn-outline" onClick={() => setShowAddForm(false)}>取消</button>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '10px 0 0' }}>
+                  发布后商品立即对买家可见；不填写时间默认立即开始、7 天后结束
+                </p>
               </div>
-            ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>商品ID</th>
-                    <th>秒杀价</th>
-                    <th>库存</th>
-                    <th>已售</th>
-                    <th>状态</th>
-                    <th>开始时间</th>
-                    <th>结束时间</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map(product => (
-                    <tr key={product.id}>
-                      <td className="id-cell">{product.id}</td>
-                      <td className="price-cell">¥{product.seckillPrice}</td>
-                      <td>{product.stockCount}</td>
-                      <td>{product.soldCount}</td>
-                      <td><span className={`status-badge ${getStatusClass(product.status)}`}>{getStatusText(product.status)}</span></td>
-                      <td>{formatDate(product.startDate)}</td>
-                      <td>{formatDate(product.endDate)}</td>
-                      <td>
-                        <button className="btn-text-danger" onClick={() => handleDeleteProduct(product.id)}>删除</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             )}
+
+            {/* Products table */}
+            <div style={{ background: 'white', borderRadius: 'var(--border-radius)', overflow: 'hidden', boxShadow: 'var(--shadow)' }}>
+              {products.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">📦</div>
+                  <h3>暂无商品</h3>
+                  <p>点击「发布商品」开始添加秒杀商品</p>
+                  <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>+ 发布商品</button>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+                    <thead>
+                      <tr>
+                        {['图片', '商品ID', '秒杀价', '库存', '已售', '状态', '开始时间', '结束时间', '操作'].map(h => (
+                          <th key={h} style={{
+                            padding: '12px 14px', textAlign: 'left', fontSize: 12, fontWeight: 600,
+                            color: 'var(--text-muted)', background: '#fafafa',
+                            borderBottom: '1px solid var(--border-color)', whiteSpace: 'nowrap',
+                          }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map(p => (
+                        <tr
+                          key={p.id}
+                          style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = '#f9fafc')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          {/* Image thumbnail */}
+                          <td style={{ padding: '10px 14px' }}>
+                            <div style={{
+                              width: 44, height: 44, borderRadius: 6, overflow: 'hidden', flexShrink: 0,
+                              background: `linear-gradient(135deg,hsl(${(Number(p.id) * 37) % 360},55%,86%),hsl(${(Number(p.id) * 37 + 50) % 360},55%,76%))`,
+                            }}>
+                              {p.imageUrl && (
+                                <img src={p.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              )}
+                            </div>
+                          </td>
+                          <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{p.id}</td>
+                          <td style={{ padding: '10px 14px', color: 'var(--color-accent)', fontWeight: 700 }}>¥{p.seckillPrice}</td>
+                          <td style={{ padding: '10px 14px', fontWeight: 500 }}>{p.stockCount}</td>
+                          <td style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>{p.soldCount ?? 0}</td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <span className={`badge ${getStatusClass(p.status)}`}>{getStatusText(p.status)}</span>
+                          </td>
+                          <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(p.startDate)}</td>
+                          <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(p.endDate)}</td>
+                          <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
+                            <button
+                              onClick={() => handleEditClick(p)}
+                              style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: 13, padding: '3px 8px', fontWeight: 500 }}
+                            >
+                              编辑
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(p.id)}
+                              style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: 13, padding: '3px 8px', fontWeight: 500 }}
+                            >
+                              删除
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ========== Orders ========== */}
+        {activeTab === 'orders' && (
+          <div>
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>订单列表</h3>
+            <div style={{ background: 'white', borderRadius: 'var(--border-radius)', overflow: 'hidden', boxShadow: 'var(--shadow)' }}>
+              {orders.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">📋</div>
+                  <h3>暂无订单</h3>
+                  <p>买家下单后将在此处显示</p>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+                    <thead>
+                      <tr>
+                        {['订单号', '用户ID', '商品ID', '秒杀价', '实付金额', '状态', '下单时间', '支付时间'].map(h => (
+                          <th key={h} style={{
+                            padding: '12px 14px', textAlign: 'left', fontSize: 12, fontWeight: 600,
+                            color: 'var(--text-muted)', background: '#fafafa',
+                            borderBottom: '1px solid var(--border-color)', whiteSpace: 'nowrap',
+                          }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map(o => (
+                        <tr
+                          key={o.id}
+                          style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = '#f9fafc')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{o.id}</td>
+                          <td style={{ padding: '10px 14px', fontSize: 13 }}>{o.userId}</td>
+                          <td style={{ padding: '10px 14px', fontSize: 13 }}>{o.seckillId}</td>
+                          <td style={{ padding: '10px 14px', color: 'var(--color-accent)', fontWeight: 600 }}>¥{o.seckillPrice}</td>
+                          <td style={{ padding: '10px 14px', color: 'var(--color-accent)', fontWeight: 600 }}>¥{o.amount}</td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <span className={`badge ${getOrderStatusClass(o.status)}`}>{getOrderStatusText(o.status)}</span>
+                          </td>
+                          <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(o.createTime)}</td>
+                          <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(o.payTime)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ========== Edit modal ========== */}
+      {showEditModal && editForm && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowEditModal(false)}>
+          <div className="modal-box" style={{ maxWidth: 560 }}>
+            <div className="modal-header">
+              <h3>✏️ 编辑商品</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 22, lineHeight: 1 }}
+              >×</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group" style={{ marginBottom: 14 }}>
+                <label className="form-label">商品 ID</label>
+                <input className="form-input" value={editForm.id} disabled />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 14 }}>
+                <label className="form-label">秒杀价格（元）<span className="required">*</span></label>
+                <input
+                  className="form-input"
+                  type="number"
+                  value={editForm.seckillPrice}
+                  onChange={e => setEditForm(p => p ? { ...p, seckillPrice: e.target.value } : p)}
+                  step="0.01" min="0"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">当前库存</label>
+                  <input className="form-input" value={editForm.stockCount} disabled />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">库存调整</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    value={editForm.stockChange}
+                    onChange={e => setEditForm(p => p ? { ...p, stockChange: e.target.value } : p)}
+                    placeholder="+10 增加 / -5 减少"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">开始时间</label>
+                  <input
+                    className="form-input"
+                    type="datetime-local"
+                    value={editForm.startDate}
+                    onChange={e => setEditForm(p => p ? { ...p, startDate: e.target.value } : p)}
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">结束时间</label>
+                  <input
+                    className="form-input"
+                    type="datetime-local"
+                    value={editForm.endDate}
+                    onChange={e => setEditForm(p => p ? { ...p, endDate: e.target.value } : p)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">商品图片</label>
+                <ImageUpload
+                  imageUrl={editForm.imageUrl}
+                  uploading={editImageUploading}
+                  fileInputRef={editFileRef}
+                  onSelect={e => handleImageUpload(e, 'edit')}
+                  onClear={() => setEditForm(p => p ? { ...p, imageUrl: '' } : p)}
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => { setShowEditModal(false); setEditForm(null); }}>取消</button>
+              <button className="btn btn-primary" onClick={handleEditSubmit} disabled={submitting}>
+                {submitting ? '保存中…' : '确认保存'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* 订单管理 */}
-      {activeTab === 'orders' && (
-        <div>
-          <h3 style={{ marginBottom: '16px' }}>订单列表</h3>
-          <div className="table-container">
-            {orders.length === 0 ? (
-              <div className="empty-state">
-                <p>暂无订单</p>
-              </div>
-            ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>订单号</th>
-                    <th>用户ID</th>
-                    <th>商品ID</th>
-                    <th>秒杀价</th>
-                    <th>实付金额</th>
-                    <th>状态</th>
-                    <th>下单时间</th>
-                    <th>支付时间</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map(order => (
-                    <tr key={order.id}>
-                      <td className="id-cell">{order.id}</td>
-                      <td>{order.userId}</td>
-                      <td>{order.seckillId}</td>
-                      <td className="price-cell">¥{order.seckillPrice}</td>
-                      <td className="price-cell">¥{order.amount}</td>
-                      <td><span className={`status-badge ${getOrderStatusClass(order.status)}`}>{getOrderStatusText(order.status)}</span></td>
-                      <td>{formatDate(order.createTime)}</td>
-                      <td>{formatDate(order.payTime)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-      )}
+      <AIChatWidget />
 
-      <style>{`
-        .seller-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border-radius: 12px;
-          margin-bottom: 20px;
-        }
-        .seller-header h2 {
-          margin: 0;
-          font-size: 24px;
-        }
-        .seller-tabs {
-          display: flex;
-          gap: 8px;
-          margin-bottom: 24px;
-          background: white;
-          padding: 8px;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .seller-tabs button {
-          flex: 1;
-          padding: 14px 24px;
-          border: none;
-          background: none;
-          cursor: pointer;
-          font-size: 15px;
-          color: #666;
-          border-radius: 8px;
-          transition: all 0.3s;
-        }
-        .seller-tabs button:hover {
-          background: #f5f5f5;
-        }
-        .seller-tabs button.active {
-          background: #667eea;
-          color: white;
-        }
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-          gap: 16px;
-        }
-        .stat-card {
-          background: white;
-          border-radius: 12px;
-          padding: 20px;
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-          transition: transform 0.3s;
-        }
-        .stat-card:hover {
-          transform: translateY(-2px);
-        }
-        .stat-card.highlight {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-        }
-        .stat-icon {
-          font-size: 32px;
-        }
-        .stat-value {
-          font-size: 24px;
-          font-weight: bold;
-        }
-        .stat-label {
-          font-size: 13px;
-          opacity: 0.8;
-          margin-top: 4px;
-        }
-        .section-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 16px;
-        }
-        .section-header h3 {
-          margin: 0;
-        }
-        .publish-form {
-          padding: 24px;
-          margin-bottom: 20px;
-          background: #fafafa;
-          border: 2px dashed #ddd;
-        }
-        .publish-form h4 {
-          margin: 0 0 20px 0;
-          color: #333;
-        }
-        .form-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 16px;
-        }
-        .form-group {
-          display: flex;
-          flex-direction: column;
-        }
-        .form-group label {
-          margin-bottom: 6px;
-          font-size: 14px;
-          color: #333;
-          font-weight: 500;
-        }
-        .form-group .required {
-          color: #ff4d4f;
-        }
-        .form-group input {
-          padding: 10px 12px;
-          border: 1px solid #d9d9d9;
-          border-radius: 6px;
-          font-size: 14px;
-          transition: border-color 0.3s;
-        }
-        .form-group input:focus {
-          outline: none;
-          border-color: #667eea;
-          box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-        }
-        .form-actions {
-          display: flex;
-          gap: 12px;
-          margin-top: 20px;
-        }
-        .form-tip {
-          margin-top: 12px;
-          font-size: 12px;
-          color: #888;
-        }
-        .table-container {
-          background: white;
-          border-radius: 12px;
-          overflow: hidden;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .data-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        .data-table th {
-          background: #fafafa;
-          padding: 14px 16px;
-          text-align: left;
-          font-weight: 600;
-          font-size: 13px;
-          color: #666;
-          border-bottom: 1px solid #eee;
-        }
-        .data-table td {
-          padding: 14px 16px;
-          border-bottom: 1px solid #f5f5f5;
-          font-size: 14px;
-        }
-        .data-table tr:hover {
-          background: #fafafa;
-        }
-        .id-cell {
-          font-family: monospace;
-          color: #888;
-        }
-        .price-cell {
-          color: #ff4d4f;
-          font-weight: 500;
-        }
-        .status-badge {
-          display: inline-block;
-          padding: 4px 10px;
-          border-radius: 4px;
-          font-size: 12px;
-        }
-        .status-offline { background: #f5f5f5; color: #999; }
-        .status-preparing { background: #e6f7ff; color: #1890ff; }
-        .status-active { background: #f6ffed; color: #52c41a; }
-        .status-ended { background: #fff7e6; color: #fa8c16; }
-        .status-pending { background: #fff7e6; color: #fa8c16; }
-        .status-paid { background: #f6ffed; color: #52c41a; }
-        .status-cancelled { background: #f5f5f5; color: #999; }
-        .btn-text-danger {
-          background: none;
-          border: none;
-          color: #ff4d4f;
-          cursor: pointer;
-          font-size: 14px;
-          padding: 4px 8px;
-        }
-        .btn-text-danger:hover {
-          text-decoration: underline;
-        }
-        .empty-state {
-          text-align: center;
-          padding: 60px 20px;
-          color: #999;
-        }
-        .empty-state p {
-          margin-bottom: 20px;
-        }
-        .loading {
-          text-align: center;
-          padding: 60px;
-          color: #666;
-        }
-      `}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

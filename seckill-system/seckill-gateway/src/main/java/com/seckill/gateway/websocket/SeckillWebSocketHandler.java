@@ -1,6 +1,5 @@
 package com.seckill.gateway.websocket;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketSession;
@@ -9,9 +8,10 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
 @Component
 public class SeckillWebSocketHandler implements WebSocketHandler {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SeckillWebSocketHandler.class);
 
     private static final Map<String, WebSocketSession> SESSION_MAP = new ConcurrentHashMap<>();
 

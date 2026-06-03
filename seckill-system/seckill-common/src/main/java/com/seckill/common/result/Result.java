@@ -13,30 +13,21 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Result<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 响应状态码
-     */
     private Integer code;
-
-    /**
-     * 响应消息
-     */
     private String message;
-
-    /**
-     * 响应数据
-     */
     private T data;
-
-    /**
-     * 响应时间戳
-     */
     private Long timestamp;
+
+    public Result(Integer code, String message, T data, Long timestamp) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
+        this.timestamp = timestamp;
+    }
 
     public static <T> Result<T> success() {
         return success(null);

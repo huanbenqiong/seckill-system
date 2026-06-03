@@ -10,14 +10,23 @@ import com.seckill.user.mapper.SellerOrderMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * 商家控制器
@@ -34,6 +43,69 @@ public class SellerController {
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATETIME_T_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private static final DateTimeFormatter DATETIME_T_SHORT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
+    private static final String UPLOAD_DIR = System.getProperty("user.dir") + File.separator + "uploads" + File.separator;
+
+    /**
+     * 上传商品图片
+     */
+    @PostMapping("/upload")
+    public Result<String> uploadImage(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @RequestParam("file") MultipartFile file) {
+        if (userId == null) return Result.error("请先登录");
+        if (file == null || file.isEmpty()) return Result.error("文件不能为空");
+
+        String originalName = file.getOriginalFilename();
+        String ext = (originalName != null && originalName.contains("."))
+                ? originalName.substring(originalName.lastIndexOf('.')).toLowerCase()
+                : "";
+        if (!ext.matches("\\.(jpg|jpeg|png|gif|webp)")) {
+            return Result.error("不支持的文件类型，请上传 JPG/PNG/GIF/WebP 图片");
+        }
+
+        try {
+            File dir = new File(UPLOAD_DIR);
+            if (!dir.exists()) dir.mkdirs();
+
+            String filename = UUID.randomUUID().toString().replace("-", "") + ext;
+            File dest = new File(UPLOAD_DIR + filename);
+            file.transferTo(dest);
+
+            String url = "/api/seller/images/" + filename;
+            return Result.success("上传成功", url);
+        } catch (IOException e) {
+            return Result.error("上传失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取已上传的商品图片
+     */
+    @GetMapping("/images/{filename:.+}")
+    public ResponseEntity<byte[]> getImage(@PathVariable String filename) {
+        // Prevent path traversal
+        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            Path imagePath = Paths.get(UPLOAD_DIR + filename);
+            if (!Files.exists(imagePath)) return ResponseEntity.notFound().build();
+
+            byte[] data = Files.readAllBytes(imagePath);
+            String contentType = Files.probeContentType(imagePath);
+            MediaType mediaType = contentType != null
+                    ? MediaType.parseMediaType(contentType)
+                    : MediaType.APPLICATION_OCTET_STREAM;
+
+            return ResponseEntity.ok()
+                    .contentType(mediaType)
+                    .header("Cache-Control", "public, max-age=86400")
+                    .body(data);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
     /**
      * 获取店铺统计信息（带实时库存）
@@ -183,15 +255,34 @@ public class SellerController {
                 goods.setEndDate(LocalDateTime.now().plusDays(7));
             }
             
+            // 商品名称
+            Object nameObj = productData.get("name");
+            if (nameObj != null && !nameObj.toString().isEmpty()) {
+                goods.setName(nameObj.toString());
+            }
+
+            // 商品分类
+            Object categoryObj = productData.get("category");
+            if (categoryObj != null && !categoryObj.toString().isEmpty()) {
+                goods.setCategory(categoryObj.toString());
+            }
+
+            // 商品图片
+            Object imageUrlObj = productData.get("imageUrl");
+            if (imageUrlObj != null && !imageUrlObj.toString().isEmpty()) {
+                goods.setImageUrl(imageUrlObj.toString());
+            }
+
             goods.setCreateTime(LocalDateTime.now());
             goods.setUpdateTime(LocalDateTime.now());
-            
+
             sellerGoodsMapper.insert(goods);
-            
+
             Map<String, Object> result = new HashMap<>();
             result.put("id", goods.getId());
+            result.put("seckillId", goods.getId());
             result.put("goodsId", goods.getGoodsId());
-            
+
             return Result.success("商品发布成功", result);
         } catch (Exception e) {
             e.printStackTrace();
@@ -200,17 +291,87 @@ public class SellerController {
     }
 
     /**
-     * 更新秒杀商品
+     * 更新秒杀商品（支持库存增减调整）
      */
     @PutMapping("/products/{id}")
     public Result<String> updateProduct(
             @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable("id") Long id,
-            @RequestBody SellerGoods goods) {
+            @RequestBody Map<String, Object> productData) {
         if (userId == null) {
             return Result.error("请先登录");
         }
-        goods.setId(id);
+
+        SellerGoods goods = sellerGoodsMapper.selectById(id);
+        if (goods == null) {
+            return Result.error("商品不存在");
+        }
+
+        // 更新秒杀价格
+        if (productData.containsKey("seckillPrice")) {
+            goods.setSeckillPrice(new BigDecimal(productData.get("seckillPrice").toString()));
+        }
+
+        // 更新活动时间
+        String startStr = (String) productData.get("startDate");
+        if (startStr != null && !startStr.isEmpty()) {
+            String dateStr = startStr.replace("Z", "");
+            if (dateStr.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$")) {
+                goods.setStartDate(LocalDateTime.parse(dateStr + ":00", DATETIME_T_FORMATTER));
+            } else if (dateStr.contains("T")) {
+                goods.setStartDate(LocalDateTime.parse(dateStr, DATETIME_T_FORMATTER));
+            } else {
+                goods.setStartDate(LocalDateTime.parse(dateStr, DATETIME_FORMATTER));
+            }
+        }
+
+        String endStr = (String) productData.get("endDate");
+        if (endStr != null && !endStr.isEmpty()) {
+            String dateStr = endStr.replace("Z", "");
+            if (dateStr.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$")) {
+                goods.setEndDate(LocalDateTime.parse(dateStr + ":00", DATETIME_T_FORMATTER));
+            } else if (dateStr.contains("T")) {
+                goods.setEndDate(LocalDateTime.parse(dateStr, DATETIME_T_FORMATTER));
+            } else {
+                goods.setEndDate(LocalDateTime.parse(dateStr, DATETIME_FORMATTER));
+            }
+        }
+
+        // 更新商品名称
+        if (productData.containsKey("name")) {
+            Object nameObj = productData.get("name");
+            goods.setName(nameObj != null && !nameObj.toString().isEmpty() ? nameObj.toString() : goods.getName());
+        }
+
+        // 更新商品分类
+        if (productData.containsKey("category")) {
+            Object categoryObj = productData.get("category");
+            goods.setCategory(categoryObj != null && !categoryObj.toString().isEmpty() ? categoryObj.toString() : goods.getCategory());
+        }
+
+        // 更新图片URL
+        if (productData.containsKey("imageUrl")) {
+            Object imageUrlObj = productData.get("imageUrl");
+            goods.setImageUrl(imageUrlObj != null ? imageUrlObj.toString() : null);
+        }
+
+        // 库存调整
+        if (productData.containsKey("stockChange")) {
+            int stockChange = Integer.parseInt(productData.get("stockChange").toString());
+            if (stockChange != 0) {
+                // 更新数据库库存
+                goods.setStockCount(goods.getStockCount() + stockChange);
+                if (goods.getStockCount() < 0) {
+                    goods.setStockCount(0);
+                }
+
+                // 更新 Redis 库存
+                String stockKey = RedisConstants.SECKILL_STOCK + id;
+                redisTemplate.opsForValue().increment(stockKey, stockChange);
+            }
+        }
+
+        goods.setUpdateTime(LocalDateTime.now());
         sellerGoodsMapper.updateById(goods);
         return Result.success("商品更新成功");
     }

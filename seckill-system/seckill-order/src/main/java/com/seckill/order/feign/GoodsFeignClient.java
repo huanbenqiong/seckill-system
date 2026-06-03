@@ -2,6 +2,7 @@ package com.seckill.order.feign;
 
 import com.seckill.common.result.Result;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -22,4 +23,10 @@ public interface GoodsFeignClient {
      */
     @PostMapping("/restoreStock/{goodsId}")
     Result<Object> restoreStock(@RequestParam("goodsId") Long goodsId);
+
+    /**
+     * 订单创建后同步扣减数据库库存
+     */
+    @PostMapping("/updateStockAndSold/{goodsId}")
+    Result<Object> updateStockAndSold(@PathVariable("goodsId") Long goodsId);
 }

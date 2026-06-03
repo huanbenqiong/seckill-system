@@ -3,22 +3,20 @@ package com.seckill.order.mq;
 import com.seckill.common.constant.MqConstants;
 import com.seckill.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Component;
 
-/**
- * 订单消息消费者
- */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 @RocketMQMessageListener(
         topic = MqConstants.SECKILL_ORDER_TOPIC,
-        consumerGroup = MqConstants.ORDER_CONSUMER_GROUP
+        consumerGroup = MqConstants.ORDER_CONSUMER_GROUP,
+        selectorExpression = MqConstants.TAG_CANCEL_ORDER
 )
 public class OrderMessageConsumer implements RocketMQListener<String> {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(OrderMessageConsumer.class);
 
     private final OrderService orderService;
 
@@ -27,7 +25,7 @@ public class OrderMessageConsumer implements RocketMQListener<String> {
         log.info("收到订单超时检查消息: orderId={}", orderIdStr);
         try {
             Long orderId = Long.parseLong(orderIdStr);
-            orderService.cancelOrder(orderId);  // 调用无用户ID的版本
+            orderService.cancelOrder(orderId);
         } catch (NumberFormatException e) {
             log.error("订单ID格式错误: {}", orderIdStr, e);
         } catch (Exception e) {

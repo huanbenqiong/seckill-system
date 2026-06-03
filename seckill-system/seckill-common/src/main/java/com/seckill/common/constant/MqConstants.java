@@ -15,9 +15,14 @@ public class MqConstants {
 
     // ========== 消费者组 ==========
     /**
-     * 订单消费者组
+     * 订单消费者组（取消/超时）
      */
     public static final String ORDER_CONSUMER_GROUP = "seckill-order-consumer-group";
+
+    /**
+     * 订单创建消费者组
+     */
+    public static final String ORDER_CREATE_CONSUMER_GROUP = "seckill-order-create-group";
 
     // ========== Tag ==========
     /**

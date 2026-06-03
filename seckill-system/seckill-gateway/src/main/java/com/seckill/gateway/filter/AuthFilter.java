@@ -2,7 +2,6 @@ package com.seckill.gateway.filter;
 
 import com.seckill.common.utils.JwtUtils;
 import io.jsonwebtoken.JwtException;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -20,9 +19,10 @@ import java.util.List;
 /**
  * 认证过滤器 - 验证 Token、提取用户信息
  */
-@Slf4j
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthFilter.class);
 
     /**
      * 无需认证的路径
@@ -55,7 +55,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 获取 Token (支持 Header 和 Cookie)
         String token = extractToken(request);
-        
+
         if (token == null) {
             log.warn("请求路径: {}, Token 不存在", path);
             return unauthorized(exchange.getResponse(), "请先登录");
@@ -116,7 +116,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
         // 2. 从 Cookie 获取
         String cookie = request.getHeaders().getFirst("Cookie");
         if (cookie != null) {
-            // 解析 cookie 中的 token
             String[] cookies = cookie.split(";");
             for (String c : cookies) {
                 String[] parts = c.trim().split("=");
@@ -126,7 +125,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             }
         }
 
-        // 3. 从查询参数获取（不推荐，仅用于开发调试）
+        // 3. 从查询参数获取（仅开发调试）
         String queryToken = request.getQueryParams().getFirst("token");
         if (queryToken != null && !queryToken.isEmpty()) {
             return queryToken;
@@ -143,7 +142,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         response.getHeaders().add("Content-Type", "application/json;charset=UTF-8");
         response.getHeaders().add("Access-Control-Allow-Credentials", "true");
         response.getHeaders().add("Access-Control-Allow-Origin", "*");
-        
+
         String body = "{\"code\":401,\"message\":\"" + message + "\"}";
         return response.writeWith(Mono.just(response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8))));
     }

@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: seckill-gateway
+  codec:
+    max-in-memory-size: 10MB
   config:
     import: optional:nacos:${spring.cloud.nacos.config.server-addr:127.0.0.1:8848}
 

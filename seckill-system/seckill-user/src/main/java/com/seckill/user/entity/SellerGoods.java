@@ -41,6 +41,12 @@ public class SellerGoods implements Serializable {
 
     private Integer status;
 
+    private String name;
+
+    private String category;
+
+    private String imageUrl;
+
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;

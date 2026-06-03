@@ -1,27 +1,47 @@
-version: '3'
 services:
-  rocketmq-namesrv:
+
+  # ==================== Nacos ====================
+  seckill-nacos:
+    image: nacos/nacos-server:v2.2.3
+    container_name: seckill-nacos
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    environment:
+      - MODE=standalone
+      - JVM_XMS=256m
+      - JVM_XMX=256m
+    networks:
+      - seckill-net
+
+  # ==================== RocketMQ NameServer ====================
+  seckill-namesrv:
     image: apache/rocketmq:4.9.4
-    container_name: rocketmq-namesrv
+    container_name: seckill-namesrv
     ports:
       - "9876:9876"
     environment:
-      - JAVA_OPT_EXT=-Xms512m -Xmx512m -Xmn256m
+      - JAVA_OPT_EXT=-Xms256m -Xmx256m -Xmn128m
     command: sh mqnamesrv
     networks:
       - seckill-net
 
-  rocketmq-broker:
+  # ==================== RocketMQ Broker ====================
+  seckill-broker:
     image: apache/rocketmq:4.9.4
-    container_name: rocketmq-broker
+    container_name: seckill-broker
     ports:
+      - "10909:10909"
       - "10911:10911"
       - "10912:10912"
     environment:
-      - JAVA_OPT_EXT=-Xms512m -Xmx512m -Xmn256m
-    command: sh mqbroker -n rocketmq-namesrv:9876
+      - JAVA_OPT_EXT=-Xms256m -Xmx256m -Xmn128m
+    volumes:
+      # 挂载自定义 broker 配置（关键：设置 brokerIP1=127.0.0.1）
+      - ./docker/broker.conf:/home/rocketmq/rocketmq-4.9.4/conf/broker.conf
+    command: sh mqbroker -n seckill-namesrv:9876 -c /home/rocketmq/rocketmq-4.9.4/conf/broker.conf
     depends_on:
-      - rocketmq-namesrv
+      - seckill-namesrv
     networks:
       - seckill-net
 

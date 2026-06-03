@@ -1,0 +1,78 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-05-28T13:28:58.933+08:00  INFO 35416 --- [seckill-goods] [           main] com.seckill.goods.GoodsApplication       : Starting GoodsApplication using Java 23.0.1 with PID 35416 (D:\seckill-system\seckill-system\seckill-goods\target\seckill-goods-1.0.0.jar started by Sherlock in D:\seckill-system\seckill-system)
+2026-05-28T13:28:58.936+08:00 DEBUG 35416 --- [seckill-goods] [           main] com.seckill.goods.GoodsApplication       : Running with Spring Boot v3.2.5, Spring v6.1.6
+2026-05-28T13:28:58.937+08:00  INFO 35416 --- [seckill-goods] [           main] com.seckill.goods.GoodsApplication       : No active profile set, falling back to 1 default profile: "default"
+2026-05-28T13:28:59.071+08:00  WARN 35416 --- [seckill-goods] [           main] c.a.c.n.c.NacosConfigDataLoader          : [Nacos Config] config[dataId=127.0.0.1:8848, group=DEFAULT_GROUP] is empty
+2026-05-28T13:29:00.871+08:00  INFO 35416 --- [seckill-goods] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-28T13:29:00.875+08:00  INFO 35416 --- [seckill-goods] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-28T13:29:00.907+08:00  INFO 35416 --- [seckill-goods] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 13 ms. Found 0 Redis repository interfaces.
+2026-05-28T13:29:01.220+08:00  INFO 35416 --- [seckill-goods] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=98900f3c-904c-3dd2-b4da-b9f0a6b0ac3f
+2026-05-28T13:29:02.003+08:00  WARN 35416 --- [seckill-goods] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration$DeferringLoadBalancerInterceptorConfig' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration$DeferringLoadBalancerInterceptorConfig] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [lbRestClientPostProcessor] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2026-05-28T13:29:02.009+08:00  WARN 35416 --- [seckill-goods] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'deferringLoadBalancerInterceptor' of type [org.springframework.cloud.client.loadbalancer.DeferringLoadBalancerInterceptor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-05-28T13:29:02.620+08:00  INFO 35416 --- [seckill-goods] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-05-28T13:29:02.640+08:00  INFO 35416 --- [seckill-goods] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-28T13:29:02.640+08:00  INFO 35416 --- [seckill-goods] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2026-05-28T13:29:02.740+08:00  INFO 35416 --- [seckill-goods] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-05-28T13:29:02.742+08:00  INFO 35416 --- [seckill-goods] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3665 ms
+Logging initialized using 'class org.apache.ibatis.logging.stdout.StdOutImpl' adapter.
+Use localhost address 
+Get LAPTOP-ASMBL2OQ/192.168.40.1 network interface 
+Get network interface info: name:ethernet_32775 (VMware Virtual Ethernet Adapter for VMnet8)
+Initialization Sequence datacenterId:0 workerId:7
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.6 
+2026-05-28T13:29:05.051+08:00  INFO 35416 --- [seckill-goods] [           main] org.redisson.Version                     : Redisson 3.27.2
+2026-05-28T13:29:06.433+08:00  INFO 35416 --- [seckill-goods] [isson-netty-1-4] o.redisson.connection.ConnectionsHolder  : 1 connections initialized for 127.0.0.1/127.0.0.1:6379
+2026-05-28T13:29:06.456+08:00  INFO 35416 --- [seckill-goods] [sson-netty-1-13] o.redisson.connection.ConnectionsHolder  : 5 connections initialized for 127.0.0.1/127.0.0.1:6379
+2026-05-28T13:29:06.942+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.c.sentinel.SentinelWebMvcConfigurer  : [Sentinel Starter] register SentinelWebInterceptor with urlPatterns: [/**].
+2026-05-28T13:29:08.982+08:00  WARN 35416 --- [seckill-goods] [           main] iguration$LoadBalancerCaffeineWarnLogger : Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-05-28T13:29:09.009+08:00  INFO 35416 --- [seckill-goods] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint(s) beneath base path '/actuator'
+2026-05-28T13:29:09.084+08:00  INFO 35416 --- [seckill-goods] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path ''
+2026-05-28T13:29:09.090+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.client.naming          : initializer namespace from ans.namespace attribute : null
+2026-05-28T13:29:09.090+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.client.naming          : initializer namespace from ALIBABA_ALIWARE_NAMESPACE attribute :null
+2026-05-28T13:29:09.090+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.client.naming          : initializer namespace from namespace attribute :null
+2026-05-28T13:29:09.094+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.client.naming          : FailoverDataSource type is class com.alibaba.nacos.client.naming.backups.datasource.DiskFailoverDataSource
+2026-05-28T13:29:09.098+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.n.p.a.s.c.ClientAuthPluginManager    : [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.impl.NacosClientAuthServiceImpl success.
+2026-05-28T13:29:09.098+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.n.p.a.s.c.ClientAuthPluginManager    : [ClientAuthPluginManager] Load ClientAuthService com.alibaba.nacos.client.auth.ram.RamClientAuthServiceImpl success.
+2026-05-28T13:29:09.102+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.common.remote.client   : [RpcClientFactory] create a new rpc client of 4377d9a7-1d05-4d96-9d09-b5876fd9d42e
+2026-05-28T13:29:09.103+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.client.naming          : Create naming rpc client for uuid->4377d9a7-1d05-4d96-9d09-b5876fd9d42e
+2026-05-28T13:29:09.103+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.common.remote.client   : [4377d9a7-1d05-4d96-9d09-b5876fd9d42e] RpcClient init, ServerListFactory = com.alibaba.nacos.client.naming.core.ServerListManager
+2026-05-28T13:29:09.103+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.common.remote.client   : [4377d9a7-1d05-4d96-9d09-b5876fd9d42e] Registry connection listener to current client:com.alibaba.nacos.client.naming.remote.gprc.redo.NamingGrpcRedoService
+2026-05-28T13:29:09.104+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.common.remote.client   : [4377d9a7-1d05-4d96-9d09-b5876fd9d42e] Register server push request handler:com.alibaba.nacos.client.naming.remote.gprc.NamingPushRequestHandler
+2026-05-28T13:29:09.104+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.common.remote.client   : [4377d9a7-1d05-4d96-9d09-b5876fd9d42e] Try to connect to server on start up, server: {serverIp = '127.0.0.1', server main port = 8848}
+2026-05-28T13:29:09.105+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.n.c.remote.client.grpc.GrpcClient    : grpc client connection server:127.0.0.1 ip,serverPort:9848,grpcTslConfig:{"sslProvider":"","enableTls":false,"mutualAuthEnable":false,"trustAll":false}
+2026-05-28T13:29:09.226+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.common.remote.client   : [4377d9a7-1d05-4d96-9d09-b5876fd9d42e] Success to connect to server [127.0.0.1:8848] on start up, connectionId = 1779946149544_172.17.0.1_60174
+2026-05-28T13:29:09.226+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.common.remote.client   : [4377d9a7-1d05-4d96-9d09-b5876fd9d42e] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$ConnectResetRequestHandler
+2026-05-28T13:29:09.226+08:00  INFO 35416 --- [seckill-goods] [remote.worker.0] com.alibaba.nacos.common.remote.client   : [4377d9a7-1d05-4d96-9d09-b5876fd9d42e] Notify connected event to listeners.
+2026-05-28T13:29:09.226+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.common.remote.client   : [4377d9a7-1d05-4d96-9d09-b5876fd9d42e] Register server push request handler:com.alibaba.nacos.common.remote.client.RpcClient$$Lambda/0x000001920137e178
+2026-05-28T13:29:09.226+08:00  INFO 35416 --- [seckill-goods] [remote.worker.0] com.alibaba.nacos.client.naming          : Grpc connection connect
+2026-05-28T13:29:09.227+08:00  INFO 35416 --- [seckill-goods] [           main] com.alibaba.nacos.client.naming          : [REGISTER-SERVICE] public registering service seckill-goods with instance Instance{instanceId='null', ip='192.168.40.1', port=8082, weight=1.0, healthy=true, enabled=true, ephemeral=true, clusterName='', serviceName='null', metadata={IPv6=[2409:894d:cf8:3a29:d52f:52df:46c1:d867], preserved.register.source=SPRING_CLOUD}}
+2026-05-28T13:29:09.239+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.c.n.registry.NacosServiceRegistry    : nacos registry, DEFAULT_GROUP seckill-goods 192.168.40.1:8082 register finished
+2026-05-28T13:29:09.255+08:00  INFO 35416 --- [seckill-goods] [           main] com.seckill.goods.GoodsApplication       : Started GoodsApplication in 12.915 seconds (process running for 14.079)
+2026-05-28T13:29:09.327+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.nacos.client.config.impl.CacheData   : config listener notify warn timeout millis use default 60000 millis 
+2026-05-28T13:29:09.328+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.nacos.client.config.impl.CacheData   : nacos.cache.data.init.snapshot = true 
+2026-05-28T13:29:09.328+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-127.0.0.1_8848] [subscribe] 127.0.0.1:8848+DEFAULT_GROUP
+2026-05-28T13:29:09.334+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-127.0.0.1_8848] [add-listener] ok, tenant=, dataId=127.0.0.1:8848, group=DEFAULT_GROUP, cnt=1
+2026-05-28T13:29:09.334+08:00  INFO 35416 --- [seckill-goods] [           main] c.a.c.n.refresh.NacosContextRefresher    : [Nacos Config] Listening config: dataId=127.0.0.1:8848, group=DEFAULT_GROUP
+2026-05-28T13:29:28.226+08:00  INFO 35416 --- [seckill-goods] [nio-8082-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-28T13:29:28.227+08:00  INFO 35416 --- [seckill-goods] [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-28T13:29:28.227+08:00  INFO 35416 --- [seckill-goods] [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+INFO: Sentinel log output type is: file
+INFO: Sentinel log charset is: utf-8
+INFO: Sentinel log base directory is: C:\Users\Sherlock\logs\csp\
+INFO: Sentinel log name use pid is: false
+INFO: Sentinel log level is: INFO
+2026-05-28T13:29:28.279+08:00  INFO 35416 --- [seckill-goods] [nio-8082-exec-1] c.a.c.s.e.SentinelHealthIndicator        : Find sentinel dashboard server list: []
+2026-05-28T13:29:28.285+08:00  INFO 35416 --- [seckill-goods] [nio-8082-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-28T13:29:28.406+08:00  INFO 35416 --- [seckill-goods] [nio-8082-exec-1] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@31c79b01
+2026-05-28T13:29:28.409+08:00  INFO 35416 --- [seckill-goods] [nio-8082-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.

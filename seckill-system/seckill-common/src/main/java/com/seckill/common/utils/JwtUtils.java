@@ -2,7 +2,6 @@ package com.seckill.common.utils;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -13,8 +12,9 @@ import java.util.Map;
 /**
  * JWT 工具类
  */
-@Slf4j
 public class JwtUtils {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JwtUtils.class);
 
     private static final String SECRET = "seckill-system-jwt-secret-key-must-be-at-least-256-bits-long-for-security";
     private static final long EXPIRATION = 24 * 60 * 60 * 1000L; // 24小时

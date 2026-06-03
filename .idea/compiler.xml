@@ -7,13 +7,32 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+      </profile>
+      <profile name="Annotation profile for Seckill Parent" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$PROJECT_DIR$/../idea/apache-maven-3.9.10/mvn_repo/org/projectlombok/lombok/1.18.32/lombok-1.18.32.jar" />
+        </processorPath>
+        <module name="seckill-user" />
         <module name="seckill-common" />
         <module name="seckill-goods" />
-        <module name="seckill-user" />
         <module name="seckill-order" />
         <module name="seckill-gateway" />
+        <module name="seckill-admin-agent" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="23" />
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="seckill-admin-agent" options="-parameters" />
+      <module name="seckill-common" options="-parameters" />
+      <module name="seckill-gateway" options="-parameters" />
+      <module name="seckill-goods" options="-parameters" />
+      <module name="seckill-order" options="-parameters" />
+      <module name="seckill-user" options="-parameters" />
+    </option>
   </component>
 </project>

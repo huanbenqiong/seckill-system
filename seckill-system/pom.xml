@@ -18,6 +18,7 @@
         <module>seckill-user</module>
         <module>seckill-goods</module>
         <module>seckill-order</module>
+        <module>seckill-admin-agent</module>
     </modules>
 
     <properties>
@@ -41,7 +42,7 @@
         <mybatis-plus.version>3.5.6</mybatis-plus.version>
         <commons-pool2.version>2.12.0</commons-pool2.version>
         <redisson.version>3.27.2</redisson.version>
-        <rocketmq.version>2.2.0</rocketmq.version>
+        <rocketmq.version>2.3.0</rocketmq.version>
         <druid.version>1.2.21</druid.version>
 
         <!-- ========== 工具类版本 ========== -->
@@ -213,6 +214,16 @@
                         <source>${java.version}</source>
                         <target>${java.version}</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <compilerArgs>
+                            <arg>-parameters</arg>
+                        </compilerArgs>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
 

@@ -1,11 +1,8 @@
 package com.seckill.common.result;
 
-import lombok.Getter;
-
 /**
  * 响应状态码枚举
  */
-@Getter
 public enum ResultCode {
 
     // ========== 成功 ==========
@@ -53,11 +50,19 @@ public enum ResultCode {
     RATE_LIMIT(60401, "请求过于频繁，请稍后重试"),
     CIRCUIT_OPEN(60402, "服务暂不可用，请稍后重试");
 
-    private final Integer code;
-    private final String message;
+    public final Integer code;
+    public final String message;
 
     ResultCode(Integer code, String message) {
         this.code = code;
         this.message = message;
+    }
+
+    public Integer getCode() {
+        return code;
+    }
+
+    public String getMessage() {
+        return message;
     }
 }

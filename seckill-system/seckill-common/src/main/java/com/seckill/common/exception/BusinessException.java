@@ -1,12 +1,10 @@
 package com.seckill.common.exception;
 
 import com.seckill.common.result.ResultCode;
-import lombok.Getter;
 
 /**
  * 业务异常类
  */
-@Getter
 public class BusinessException extends RuntimeException {
 
     private final Integer code;
@@ -29,5 +27,14 @@ public class BusinessException extends RuntimeException {
     public BusinessException(ResultCode resultCode, String message) {
         super(message);
         this.code = resultCode.getCode();
+    }
+
+    public Integer getCode() {
+        return code;
+    }
+
+    @Override
+    public String getMessage() {
+        return super.getMessage();
     }
 }

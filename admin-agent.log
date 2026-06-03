@@ -1,0 +1,237 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-05-28T14:29:51.342+08:00  INFO 13880 --- [seckill-admin-agent] [           main] c.s.admin.SeckillAdminAgentApplication   : Starting SeckillAdminAgentApplication using Java 23.0.1 with PID 13880 (D:\seckill-system\seckill-system\seckill-admin-agent\target\seckill-admin-agent-1.0.0.jar started by Sherlock in D:\seckill-system\seckill-system)
+2026-05-28T14:29:51.343+08:00  INFO 13880 --- [seckill-admin-agent] [           main] c.s.admin.SeckillAdminAgentApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-05-28T14:29:52.601+08:00  INFO 13880 --- [seckill-admin-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-28T14:29:52.603+08:00  INFO 13880 --- [seckill-admin-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-28T14:29:52.620+08:00  INFO 13880 --- [seckill-admin-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 0 Redis repository interfaces.
+2026-05-28T14:29:52.798+08:00  INFO 13880 --- [seckill-admin-agent] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=75fe911f-099d-3d59-90e8-50a9b42bd1c6
+2026-05-28T14:29:53.750+08:00  INFO 13880 --- [seckill-admin-agent] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8090 (http)
+2026-05-28T14:29:53.764+08:00  INFO 13880 --- [seckill-admin-agent] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-28T14:29:53.764+08:00  INFO 13880 --- [seckill-admin-agent] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2026-05-28T14:29:53.814+08:00  INFO 13880 --- [seckill-admin-agent] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-05-28T14:29:53.815+08:00  INFO 13880 --- [seckill-admin-agent] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2378 ms
+2026-05-28T14:29:54.014+08:00  INFO 13880 --- [seckill-admin-agent] [           main] c.a.d.s.b.a.DruidDataSourceAutoConfigure : Init DruidDataSource
+2026-05-28T14:29:54.224+08:00  INFO 13880 --- [seckill-admin-agent] [           main] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} inited
+Logging initialized using 'class org.apache.ibatis.logging.stdout.StdOutImpl' adapter.
+Use localhost address 
+Get LAPTOP-ASMBL2OQ/192.168.40.1 network interface 
+Get network interface info: name:ethernet_32775 (VMware Virtual Ethernet Adapter for VMnet8)
+Initialization Sequence datacenterId:0 workerId:30
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.6 
+2026-05-28T14:29:54.839+08:00  INFO 13880 --- [seckill-admin-agent] [           main] org.redisson.Version                     : Redisson 3.27.2
+2026-05-28T14:29:55.300+08:00  INFO 13880 --- [seckill-admin-agent] [isson-netty-1-5] o.redisson.connection.ConnectionsHolder  : 1 connections initialized for localhost/127.0.0.1:6379
+2026-05-28T14:29:55.366+08:00  INFO 13880 --- [seckill-admin-agent] [sson-netty-1-20] o.redisson.connection.ConnectionsHolder  : 24 connections initialized for localhost/127.0.0.1:6379
+2026-05-28T14:29:56.450+08:00  INFO 13880 --- [seckill-admin-agent] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint(s) beneath base path '/actuator'
+2026-05-28T14:29:56.489+08:00  INFO 13880 --- [seckill-admin-agent] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8090 (http) with context path ''
+2026-05-28T14:29:56.506+08:00  INFO 13880 --- [seckill-admin-agent] [           main] c.s.admin.SeckillAdminAgentApplication   : Started SeckillAdminAgentApplication in 5.635 seconds (process running for 6.28)
+2026-05-28T14:30:00.313+08:00  INFO 13880 --- [seckill-admin-agent] [nio-8090-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-28T14:30:00.315+08:00  INFO 13880 --- [seckill-admin-agent] [nio-8090-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-28T14:30:00.315+08:00  INFO 13880 --- [seckill-admin-agent] [nio-8090-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@f2e3aeb] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,user_id,seckill_id,seckill_price,amount,status,create_time,pay_time FROM sk_order WHERE (create_time >= ? AND create_time < ?)
+==> Parameters: 2026-05-28T00:00(LocalDateTime), 2026-05-28T14:30:00.351996900(LocalDateTime)
+<==    Columns: id, user_id, seckill_id, seckill_price, amount, status, create_time, pay_time
+<==        Row: 1779947075866, 2059872127036805121, 300002, 8999.00, 8999.00, 0, 2026-05-28 13:44:36, null
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@f2e3aeb]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7442aa42] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods
+==> Parameters: 
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==        Row: 300003, 5499.00, 200, 0, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 3
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7442aa42]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@c2033b2] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,user_id,seckill_id,seckill_price,amount,status,create_time,pay_time FROM sk_order WHERE (create_time >= ? AND create_time < ?)
+==> Parameters: 2026-05-28T00:00(LocalDateTime), 2026-05-28T14:30:19.741178700(LocalDateTime)
+<==    Columns: id, user_id, seckill_id, seckill_price, amount, status, create_time, pay_time
+<==        Row: 1779947075866, 2059872127036805121, 300002, 8999.00, 8999.00, 0, 2026-05-28 13:44:36, null
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@c2033b2]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@4d1d3989] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods
+==> Parameters: 
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==        Row: 300003, 5499.00, 200, 0, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 3
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@4d1d3989]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@322b9c4d] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods
+==> Parameters: 
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==        Row: 300003, 5499.00, 200, 0, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 3
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@322b9c4d]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@a7635c0] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods WHERE id=?
+==> Parameters: 300001(Long)
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@a7635c0]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@75f80723] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods WHERE id=?
+==> Parameters: 300002(Long)
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@75f80723]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@101fe3c2] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods WHERE id=?
+==> Parameters: 300003(Long)
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300003, 5499.00, 200, 0, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@101fe3c2]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@200e43f5] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods
+==> Parameters: 
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==        Row: 300003, 5499.00, 200, 0, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 3
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@200e43f5]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@5c5b9245] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,user_id,seckill_id,seckill_price,amount,status,create_time,pay_time FROM sk_order WHERE (create_time >= ? AND create_time < ?)
+==> Parameters: 2026-05-28T00:00(LocalDateTime), 2026-05-29T00:00(LocalDateTime)
+<==    Columns: id, user_id, seckill_id, seckill_price, amount, status, create_time, pay_time
+<==        Row: 1779947075866, 2059872127036805121, 300002, 8999.00, 8999.00, 0, 2026-05-28 13:44:36, null
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@5c5b9245]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@33215667] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods
+==> Parameters: 
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==        Row: 300003, 5499.00, 200, 0, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 3
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@33215667]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@1eebff0c] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods
+==> Parameters: 
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==        Row: 300003, 5499.00, 200, 0, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 3
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@1eebff0c]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@30cfc3e2] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods
+==> Parameters: 
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==        Row: 300003, 5499.00, 200, 0, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 3
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@30cfc3e2]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@5323b50a] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods
+==> Parameters: 
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==        Row: 300003, 5499.00, 200, 0, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 3
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@5323b50a]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7006f1] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods WHERE id=?
+==> Parameters: 300001(Long)
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 100, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7006f1]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7c65fea0] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: UPDATE sk_seckill_goods SET seckill_price=?, stock_count=?, sold_count=?, status=?, start_date=?, end_date=?, create_time=?, update_time=? WHERE id=?
+==> Parameters: 5999.00(BigDecimal), 501(Integer), 0(Integer), 2(Integer), 2026-05-22T21:54:09(LocalDateTime), 2026-05-29T21:54:09(LocalDateTime), 2026-05-22T21:54:09(LocalDateTime), 2026-05-22T21:54:09(LocalDateTime), 300001(Long)
+<==    Updates: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@7c65fea0]
+2026-05-28T14:34:29.155+08:00  INFO 13880 --- [seckill-admin-agent] [nio-8090-exec-1] c.s.a.s.impl.StockAgentServiceImpl       : [AI补货] goodsId=300001 追加库存 401，当前库存=501
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@bc7e665] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods WHERE id=?
+==> Parameters: 300002(Long)
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300002, 8999.00, 49, 1, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 13:44:35
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@bc7e665]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@4d56680] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@78f30e25] will not be managed by Spring
+==>  Preparing: UPDATE sk_seckill_goods SET seckill_price=?, stock_count=?, sold_count=?, status=?, start_date=?, end_date=?, create_time=?, update_time=? WHERE id=?
+==> Parameters: 8999.00(BigDecimal), 501(Integer), 1(Integer), 2(Integer), 2026-05-22T21:54:09(LocalDateTime), 2026-05-29T21:54:09(LocalDateTime), 2026-05-22T21:54:09(LocalDateTime), 2026-05-28T13:44:35(LocalDateTime), 300002(Long)
+<==    Updates: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@4d56680]
+2026-05-28T14:34:29.167+08:00  INFO 13880 --- [seckill-admin-agent] [nio-8090-exec-1] c.s.a.s.impl.StockAgentServiceImpl       : [AI补货] goodsId=300002 追加库存 452，当前库存=501
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@fa80f4e] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@1f88f8b4] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods
+==> Parameters: 
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 300001, 5999.00, 501, 0, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-22 21:54:09
+<==        Row: 300002, 8999.00, 500, 2, 2, 2026-05-22 21:54:09, 2026-05-29 21:54:09, 2026-05-22 21:54:09, 2026-05-28 15:09:36
+<==        Row: 300003, 5499.00, 199, 1, 1, 2026-05-23 21:54:09, 2026-05-30 21:54:09, 2026-05-22 21:54:09, 2026-05-28 16:36:30
+<==        Row: 1779957441093, 2222.00, 222, 0, 2, 2026-05-09 16:37:00, 2026-05-31 16:37:00, 2026-05-28 16:37:21, 2026-05-28 16:37:21
+<==      Total: 4
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@fa80f4e]
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@31ec8227] was not registered for synchronization because synchronization is not active
+JDBC Connection [com.alibaba.druid.pool.DruidStatementConnection@1f88f8b4] will not be managed by Spring
+==>  Preparing: SELECT id,seckill_price,stock_count,sold_count,status,start_date,end_date,create_time,update_time FROM sk_seckill_goods WHERE id=?
+==> Parameters: 1779957441093(Long)
+<==    Columns: id, seckill_price, stock_count, sold_count, status, start_date, end_date, create_time, update_time
+<==        Row: 1779957441093, 2222.00, 222, 0, 2, 2026-05-09 16:37:00, 2026-05-31 16:37:00, 2026-05-28 16:37:21, 2026-05-28 16:37:21
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@31ec8227]

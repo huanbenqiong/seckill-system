@@ -8,7 +8,6 @@ import com.seckill.order.entity.Order;
 import com.seckill.order.feign.GoodsFeignClient;
 import com.seckill.order.mapper.OrderMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,25 +18,19 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 订单服务
- */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(OrderService.class);
 
     private final OrderMapper orderMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedissonClient redissonClient;
     private final GoodsFeignClient goodsFeignClient;
 
-    /**
-     * 创建秒杀订单
-     */
     @Transactional(rollbackFor = Exception.class)
     public void createSeckillOrder(Long userId, Long seckillId, Long orderId, BigDecimal amount) {
-        // 获取分布式锁，防止重复下单
         String lockKey = RedisConstants.LOCK_SECKILL + seckillId + ":" + userId;
         RLock lock = redissonClient.getLock(lockKey);
 
@@ -46,24 +39,28 @@ public class OrderService {
                 throw new BusinessException(ResultCode.SECKILL_ILLEGAL_REQUEST);
             }
 
-            // 检查是否已存在订单
             if (orderMapper.selectById(orderId) != null) {
                 log.warn("订单已存在: orderId={}", orderId);
                 return;
             }
 
-            // 创建订单
             Order order = new Order();
             order.setId(orderId);
             order.setUserId(userId);
             order.setSeckillId(seckillId);
             order.setSeckillPrice(amount);
             order.setAmount(amount);
-            order.setStatus(0); // 待支付
+            order.setStatus(0);
 
             orderMapper.insert(order);
-
             log.info("订单创建成功: orderId={}, userId={}, seckillId={}", orderId, userId, seckillId);
+
+            // 同步扣减数据库库存和已售（在锁保护内执行，失败不影响订单已入库）
+            try {
+                goodsFeignClient.updateStockAndSold(seckillId);
+            } catch (Exception e) {
+                log.error("同步数据库库存失败，订单已创建: orderId={}, seckillId={}", orderId, seckillId, e);
+            }
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -75,9 +72,6 @@ public class OrderService {
         }
     }
 
-    /**
-     * 获取用户的所有订单
-     */
     public List<Order> getUserOrders(Long userId) {
         LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Order::getUserId, userId);
@@ -85,9 +79,6 @@ public class OrderService {
         return orderMapper.selectList(wrapper);
     }
 
-    /**
-     * 取消订单（内部使用，无需用户ID）
-     */
     @Transactional(rollbackFor = Exception.class)
     public void cancelOrder(Long orderId) {
         Order order = orderMapper.selectById(orderId);
@@ -103,16 +94,10 @@ public class OrderService {
 
         order.setStatus(2);
         orderMapper.updateById(order);
-
-        // 恢复库存
         restoreStock(order.getSeckillId());
-
         log.info("订单已取消: orderId={}", orderId);
     }
 
-    /**
-     * 取消订单（用户操作，需要验证用户ID）
-     */
     @Transactional(rollbackFor = Exception.class)
     public void cancelOrder(Long orderId, Long userId) {
         Order order = orderMapper.selectById(orderId);
@@ -120,7 +105,6 @@ public class OrderService {
             throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
         }
 
-        // 验证订单属于当前用户
         if (!order.getUserId().equals(userId)) {
             throw new BusinessException("无权操作此订单");
         }
@@ -132,22 +116,15 @@ public class OrderService {
 
         order.setStatus(2);
         orderMapper.updateById(order);
-
-        // 恢复库存
         restoreStock(order.getSeckillId());
-
         log.info("订单已取消: orderId={}", orderId);
     }
 
-    /**
-     * 恢复库存
-     */
     private void restoreStock(Long seckillId) {
         String stockKey = RedisConstants.SECKILL_STOCK + seckillId;
         String soldKey = RedisConstants.SECKILL_SOLD + seckillId;
         redisTemplate.opsForValue().increment(stockKey);
         redisTemplate.opsForValue().decrement(soldKey);
-        // 同步恢复数据库库存
         try {
             goodsFeignClient.restoreStock(seckillId);
         } catch (Exception e) {
@@ -156,9 +133,6 @@ public class OrderService {
         log.info("库存已恢复: seckillId={}", seckillId);
     }
 
-    /**
-     * 支付订单
-     */
     @Transactional(rollbackFor = Exception.class)
     public void payOrder(Long orderId, Long userId) {
         Order order = orderMapper.selectById(orderId);
@@ -166,7 +140,6 @@ public class OrderService {
             throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
         }
 
-        // 验证订单属于当前用户
         if (!order.getUserId().equals(userId)) {
             throw new BusinessException("无权操作此订单");
         }
@@ -184,20 +157,13 @@ public class OrderService {
         order.setStatus(1);
         order.setPayTime(java.time.LocalDateTime.now());
         orderMapper.updateById(order);
-
         log.info("订单支付成功: orderId={}", orderId);
     }
 
-    /**
-     * 根据订单号查询订单
-     */
     public Order getOrderById(Long orderId) {
         return orderMapper.selectById(orderId);
     }
 
-    /**
-     * 根据订单号和用户ID查询订单
-     */
     public Order getOrderByIdAndUserId(Long orderId, Long userId) {
         LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Order::getId, orderId);
